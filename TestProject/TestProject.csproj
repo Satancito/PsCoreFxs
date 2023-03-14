@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<!--<Nullable>enable</Nullable>-->
+		<!--<ImplicitUsings>enable</ImplicitUsings>-->
+		<TargetFramework>net6.0</TargetFramework>
+		<PackageId>TestProject</PackageId>
+		<Title>TestProject</Title>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<UserSecretsId>dcead069-ffae-4de4-be81-710ec8ff2ac8</UserSecretsId>
+		<OutputType>Exe</OutputType>
+		<StartupObject>Program</StartupObject>
+		<PlatformTarget>AnyCPU</PlatformTarget>
+		<BuildNumber>25</BuildNumber>
+		<VersionPrefix>2.3.21</VersionPrefix>
+		<VersionSuffix></VersionSuffix>
+		<PrereleaseName>Preview1</PrereleaseName>
+		<BuildSuffix>Build</BuildSuffix>
+		<IsPrerelease>false</IsPrerelease>
+		<Version>2.3.21</Version>
+	</PropertyGroup>
+</Project>
