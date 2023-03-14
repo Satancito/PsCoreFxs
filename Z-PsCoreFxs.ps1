@@ -1063,6 +1063,8 @@ function Update-ProjectVersion {
     }
 
     if ($IsRelease.IsPresent) {
+        $buildSuffixNode.InnerText = $defaultBuildSuffix
+        $prereleaseNameNode.InnerText = $defaultPrereleaseName
         $isPrereleaseNode.InnerText = "false"
     }
 
