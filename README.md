@@ -8,7 +8,7 @@
 **1.** Run this line in Powershell.
 
 ```
-Remove-Item -Force "X-PsCoreUpdate.ps1" -ErrorAction "Continue"; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Satancito/PsCoreFxs/main/X-PsCoreUpdate.ps1" -OutFile "X-PsCoreUpdate.ps1";
+Remove-Item -Force "X-PsCoreUpdate.ps1" -ErrorAction "Ignore"; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Satancito/PsCoreFxs/main/X-PsCoreUpdate.ps1" -OutFile "X-PsCoreUpdate.ps1";
 ```
 
 **2.** Run "**X-PsUpdate.ps1**"
