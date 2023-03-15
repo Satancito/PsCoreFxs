@@ -59,9 +59,12 @@ function Get-StringCoalesce {
 
         [string]
         [Parameter()]
-        $Value2
+        $Value2,
+
+        [switch]
+        $Force
     )
-    if ([string]::IsNullOrWhiteSpace($Value2)) {
+    if (!$Force.IsPresent -and [string]::IsNullOrWhiteSpace($Value2)) {
         throw [System.ArgumentException]::new("$(Get-VariableName $Value2) value can't be null or whitespace.")
     }
     return [string]::IsNullOrWhiteSpace($value) ? $Value2 : $Value

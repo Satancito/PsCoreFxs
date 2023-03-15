@@ -11,7 +11,10 @@ param (
     $ApiKeyType = "Default",
 
     [string]
-    $NugetPushApiKey = [string]::Empty
+    $NugetPushApiKey = [string]::Empty,
+
+    [switch]
+    $NoSymbols
 )
 
 $ErrorActionPreference = "Stop"
@@ -53,7 +56,8 @@ switch ($ApiKeyType) {
 
 
 if (![string]::IsNullOrWhiteSpace($NugetPushApiKey)) {
-    dotnet nuget push "$nupkg" --api-key "$NugetPushApiKey" --source "$NUGET_ORG_URI" --no-symbols
+    [string] $symbols = $NoSymbols.IsPresent ? "--no-symbols" : [string]::Empty
+    dotnet nuget push "$nupkg" --api-key "$NugetPushApiKey" --source "$NUGET_ORG_URI" $symbols
     Test-LastExitCode
     return
 }
