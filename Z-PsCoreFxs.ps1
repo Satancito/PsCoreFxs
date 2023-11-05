@@ -1535,6 +1535,36 @@ function Show-ProjectUserSecrets {
 
 }
 
+function Test-Command {
+    param (
+        [string]$Command,
+
+        [switch]
+        $WriteOutput
+    )
+    try {
+        $output = Invoke-Expression -Command $Command 2>&1
+        $exitCode = $LASTEXITCODE
+
+        if ($exitCode -eq 0) {
+            if ($WriteOutput.IsPresent) {
+                Write-Output "✅ Command: ""$Command"" $([Environment]::NewLine)"
+                Write-Output "Output: $([Environment]::NewLine) $output"
+                return
+            }
+            return $true
+        }
+        throw
+    }
+    catch {
+        if ($WriteOutput.IsPresent) {
+            Write-Output "❌ Command: ""$Command"""
+            return
+        }
+        return $false
+    }
+}
+
 function Get-GitRepositoryRemoteUrl {
     param (
         [string]
