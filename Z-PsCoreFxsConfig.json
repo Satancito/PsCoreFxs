@@ -1,5 +1,5 @@
 {
-  "UpdateScript": "X-PsCoreUpdate.ps1",
+  "UpdateScript": "X-PsCoreFxs-Update.ps1",
   "Files": [
     "X-PsCoreFxs-PublishProjectPackage.ps1",
     "X-PsCoreFxs-PushProjectToRemote.ps1",
@@ -19,11 +19,12 @@
     "Z-CoreFxs.ps1",
     "Z-Config.json",
     "Z-Config.Last.json",
-    "X-UPDATE.ps1"
+    "X-UPDATE.ps1",
+    "X-PsCoreUpdate.ps1"
   ],
   "CoreFiles": [
     "Z-PsCoreFxs.ps1",
     "Z-PsCoreFxsConfig.json"
   ],
-  "Build": 110
+  "Build": 111
 }

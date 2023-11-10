@@ -8,13 +8,13 @@
 **1.** Run this line in Powershell.
 
 ```
-Remove-Item -Force "X-PsCoreUpdate.ps1" -ErrorAction "Ignore"; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Satancito/PsCoreFxs/main/X-PsCoreUpdate.ps1" -OutFile "X-PsCoreUpdate.ps1";
+Remove-Item -Force "X-PsCoreFxs-Update.ps1" -ErrorAction "Ignore"; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Satancito/PsCoreFxs/main/X-PsCoreFxs-Update.ps1" -OutFile "X-PsCoreFxs-Update.ps1";
 ```
 
 **2.** Run "**X-PsUpdate.ps1**"
 
 ```
-./X-PsCoreUpdate.ps1
+./X-PsCoreFxs-Update.ps1
 ```
 
 **3.** Edit "**Z-PsCoreFxsConfig.json**", in the "Files" key's value remove from array the innecesary scripts and save. 
