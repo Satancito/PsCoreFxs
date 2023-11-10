@@ -21,7 +21,7 @@ git commit -m "$message"
 
 Write-Host
 Write-InfoBlue "█ Push to remote"
-git push
+git push origin main
 
 Write-Host
 Write-Host
