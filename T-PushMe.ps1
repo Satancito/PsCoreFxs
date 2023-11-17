@@ -44,7 +44,7 @@ git status
 git commit -m "$(Get-StringCoalesce -Value $message -Value2 "Build.$($jsonObj.Build)")"
 Write-Host
 Write-InfoBlue "█ Pushing to remote"
-git push
+git push origin main
 
 Write-Host
 Write-Host
