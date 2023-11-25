@@ -1278,29 +1278,24 @@ function Set-PersistentEnvironmentVariable {
         }
         return
     }
-    $pattern = "\s*export[ \t]+$Name=[\w]*[ \t]*>[ \t]*\/dev\/null[ \t]*;[ \t]*#[ \t]*$Name\s*"
-    if ($IsLinux) {
-        $file = "~/.bash_profile"
-        $content = (Get-Content "$file" -ErrorAction Ignore -Raw) + [System.String]::Empty
-        $content = [System.Text.RegularExpressions.Regex]::Replace($content, $pattern, [String]::Empty);
-        $content += [System.Environment]::NewLine + [System.Environment]::NewLine + "export $Name=$Value > /dev/null ;  # $Name"
+    $pattern = "\s*export\s+$name=[\w\W]+\w*\s+>\s*\/dev\/null\s+;\s*#\s*$Name\s*"
+    if ($IsLinux -or $IsMacOS) {
+        if ($IsLinux) {
+            $file = "~/.bashrc"
+        }    
+        if ($IsMacOS) {
+            $file = "~/.zshrc"
+        }
+        $content = [System.IO.File]::ReadAllText((Resolve-Path $file))
+        $content = [System.Text.RegularExpressions.Regex]::Replace($content, $pattern, [System.Environment]::NewLine);
+        $content += "export $Name=$Value > /dev/null ;  # $Name"
         Set-Content "$file" -Value $content -Force
         if ($PSBoundParameters.Verbose.IsPresent) {
             Write-MyMessage -VarName $Name
         }
         return
     }
-    if ($IsMacOS) {
-        $file = "~/.zprofile"
-        $content = (Get-Content "$file" -ErrorAction Ignore -Raw) + [System.String]::Empty
-        $content = [System.Text.RegularExpressions.Regex]::Replace($content, $pattern, [String]::Empty);
-        $content += [System.Environment]::NewLine + [System.Environment]::NewLine + "export $Name=$Value > /dev/null ;  # $Name"
-        Set-Content "$file" -Value $content -Force
-        if ($PSBoundParameters.Verbose.IsPresent) {
-            Write-MyMessage -VarName $Name
-        }
-        return
-    }
+    
     throw "Invalid platform."
 }
 
@@ -1555,13 +1550,11 @@ function Test-Command {
         $ThrowOnFailure 
     )
     try {
-        if($NoOutput.IsPresent)
-        {
+        if ($NoOutput.IsPresent) {
             Invoke-Expression -Command $Command | Out-Null
         }
-        else
-        {
-            Invoke-Expression -Command $Command | Out-Host
+        else {
+            Invoke-Expression -Command $Command | Out-Null
         }
         $exitCode = $LASTEXITCODE
 
@@ -1577,8 +1570,7 @@ function Test-Command {
         if (!$NoOutput.IsPresent) {
             Write-Host "❌ Command: $Command"
         }
-        if($ThrowOnFailure)
-        {
+        if ($ThrowOnFailure) {
             throw "An error occurred while executing the command."
         }
         return $false
@@ -1607,8 +1599,7 @@ function Get-GitRepositoryRemoteUrl {
         $Path = [string]::Empty
     )
 
-    if([string]::IsNullOrWhiteSpace($Path))
-    {
+    if ([string]::IsNullOrWhiteSpace($Path)) {
         $Path = "$(Get-Location)"
     }
     $result = [string]::Empty
@@ -1616,7 +1607,7 @@ function Get-GitRepositoryRemoteUrl {
         Push-Location $Path
         return "$(Split-Path -Path (git remote get-url origin) -Leaf -ErrorAction Ignore)"
     }
-    catch{
+    catch {
         return $result
     }
     finally {
