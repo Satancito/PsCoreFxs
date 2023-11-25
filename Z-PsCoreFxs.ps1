@@ -1278,18 +1278,25 @@ function Set-PersistentEnvironmentVariable {
         }
         return
     }
-    $pattern = "\s*export\s+$name=[\w\W]+\w*\s+>\s*\/dev\/null\s+;\s*#\s*$Name\s*"
     if ($IsLinux -or $IsMacOS) {
-        if ($IsLinux) {
-            $file = "~/.bashrc"
-        }    
-        if ($IsMacOS) {
-            $file = "~/.zshrc"
+        $pattern = "\s*export\s+$name=[\w\W]*\w*\s+>\s*\/dev\/null\s+;\s*#\s*$Name\s*"
+        $files = @()
+        $files += "~/.bashrc"
+        $files += "~/.zshrc"
+        $files += "~/.cshrc"
+        $files += "~/.tcshrc"
+        $files += "~/.tcshrc"
+        $files += "~/.config/fish/config.fish"
+        
+        $files | ForEach-Object {
+            if (Test-Path -Path $_ -PathType Leaf) {
+                $content = [System.IO.File]::ReadAllText("$(Resolve-Path $_)")
+                $content = [System.Text.RegularExpressions.Regex]::Replace($content, $pattern, [System.Environment]::NewLine);
+                $content += [System.Environment]::NewLine + "export $Name=$Value > /dev/null ;  # $Name" + [System.Environment]::NewLine
+                [System.IO.File]::WriteAllText("$(Resolve-Path $_)", $content)
+            }
+            
         }
-        $content = [System.IO.File]::ReadAllText((Resolve-Path $file))
-        $content = [System.Text.RegularExpressions.Regex]::Replace($content, $pattern, [System.Environment]::NewLine);
-        $content += "export $Name=$Value > /dev/null ;  # $Name"
-        Set-Content "$file" -Value $content -Force
         if ($PSBoundParameters.Verbose.IsPresent) {
             Write-MyMessage -VarName $Name
         }
@@ -1554,7 +1561,7 @@ function Test-Command {
             Invoke-Expression -Command $Command | Out-Null
         }
         else {
-            Invoke-Expression -Command $Command | Out-Null
+            Invoke-Expression -Command $Command | Out-Host
         }
         $exitCode = $LASTEXITCODE
 
