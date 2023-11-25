@@ -1217,7 +1217,12 @@ function Set-LocalEnvironmentVariable {
         WWrite-Host "Local Environment variable " -ForegroundColor DarkYellow -NoNewline
         Write-Host "`"$VarName`"" -NoNewline -ForegroundColor Yellow
         Write-Host "  ➡  " -ForegroundColor DarkYellow -NoNewline
-        Write-Host "`"$((Get-Item env:$VarName).Value)`"" -ForegroundColor Yellow
+        try {
+            Write-Host "`"$((Get-Item env:$VarName).Value)`"" -ForegroundColor Yellow
+        }
+        catch {
+            Write-Host """""" -ForegroundColor Yellow
+        }
     }
 
     if ($Append.IsPresent) {
@@ -1225,7 +1230,7 @@ function Set-LocalEnvironmentVariable {
             $Value = (Get-Item "env:$Name").Value + $Value
         }
     }
-    Set-Item env:$Name -Value "$value" | Out-Null
+    New-Item env:$Name -Value "$value" -Force | Out-Null
     if ($PSBoundParameters.Verbose.IsPresent) {
         Write-MyMessage -VarName $Name
     }
@@ -1254,7 +1259,12 @@ function Set-PersistentEnvironmentVariable {
         Write-Host "Persistent Environment variable " -NoNewline -ForegroundColor DarkYellow
         Write-Host "`"$VarName`"" -NoNewline -ForegroundColor Yellow
         Write-Host "  ➡  " -NoNewline -ForegroundColor DarkYellow
-        Write-Host "`"$((Get-Item env:$VarName).Value)`"" -ForegroundColor Yellow
+        try {
+            Write-Host "`"$((Get-Item env:$VarName).Value)`"" -ForegroundColor Yellow
+        }
+        catch {
+            Write-Host """""" -ForegroundColor Yellow
+        }
     }
 
     Set-LocalEnvironmentVariable -Name $Name -Value $Value -Append:$Append
