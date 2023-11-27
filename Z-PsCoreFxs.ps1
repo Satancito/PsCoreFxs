@@ -1473,7 +1473,7 @@ function Install-GitRepository {
     }
     else {
         Remove-Item -Path "$Path" -Force -Recurse -ErrorAction Ignore
-        New-Item -Path "$Path" -Force | Out-Null
+        New-Item -Path "$Path" -Force -ItemType Directory | Out-Null
         git clone "$Url" "$Location"
     }
 }
