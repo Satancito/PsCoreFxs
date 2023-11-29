@@ -1384,6 +1384,20 @@ function Remove-ItemTree {
     }
 }
 
+function Get-WslPath {
+    param (
+        [string]$Path
+    )
+    if ($Path -match '^([A-Za-z]):\\') {
+        $drive = $matches[1].ToLower()
+        $result = "/mnt/$drive" + ($Path -replace '^([A-Za-z]):\\', '/')
+        $result = $result.Replace("\", "/")
+        return $result 
+    } else {
+        throw "Invalid path '$Path'."
+    }
+}
+
 function Test-GitRepository {
     param (
         [Parameter()]
