@@ -1288,7 +1288,6 @@ function Set-PersistentEnvironmentVariable {
                 $content = [System.Text.RegularExpressions.Regex]::Replace($content, $pattern, [System.Environment]::NewLine);
                 $content += [System.Environment]::NewLine + "export $Name=$Value > /dev/null ;  # $Name" + [System.Environment]::NewLine
                 [System.IO.File]::WriteAllText("$(Resolve-Path $_)", $content)
-                & source "$(Resolve-Path $_)"
             }
             
         }
