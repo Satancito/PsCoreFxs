@@ -1280,13 +1280,7 @@ function Set-PersistentEnvironmentVariable {
     }
     if ($IsLinux -or $IsMacOS) {
         $pattern = "\s*export\s+$name=[\w\W]*\w*\s+>\s*\/dev\/null\s+;\s*#\s*$Name\s*"
-        $files = @()
-        $files += "~/.bashrc"
-        $files += "~/.zshrc"
-        $files += "~/.cshrc"
-        $files += "~/.tcshrc"
-        $files += "~/.tcshrc"
-        $files += "~/.config/fish/config.fish"
+        $files = @("~/.bashrc", "~/.zshrc", "~/.bash_profile", "~/.zprofile")
         
         $files | ForEach-Object {
             if (Test-Path -Path $_ -PathType Leaf) {
@@ -1294,6 +1288,7 @@ function Set-PersistentEnvironmentVariable {
                 $content = [System.Text.RegularExpressions.Regex]::Replace($content, $pattern, [System.Environment]::NewLine);
                 $content += [System.Environment]::NewLine + "export $Name=$Value > /dev/null ;  # $Name" + [System.Environment]::NewLine
                 [System.IO.File]::WriteAllText("$(Resolve-Path $_)", $content)
+                & source "$(Resolve-Path $_)"
             }
             
         }
