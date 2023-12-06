@@ -1729,6 +1729,25 @@ function Install-BotanLibrary {
     #& "$(Select-ValueByPlatform -WindowsValue "tar -xvf $filename" -LinuxValue "" -MacOSValue "")"
 }
 
+function Join-CompileCommandsJson {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $SourceDir,
+        
+        [Parameter(Mandatory = $true)]
+        [string]
+        $DestinationDir
+    )
+    $jsonFiles = Get-ChildItem "$SourceDir/*.compile_commands.json"  
+    $encoding = [System.Text.Encoding]::UTF8 
+    $CompilationDatabase = "$DestinationDir/compile_commands.json"
+    [System.IO.File]::WriteAllText($CompilationDatabase, "[", $encoding);
+    $jsonFiles | ForEach-Object {
+        [System.IO.File]::AppendAllText($CompilationDatabase, [System.IO.File]::ReadAllText($_.FullName).TrimEnd(','), $encoding)
+    }
+    [System.IO.File]::AppendAllText($CompilationDatabase, "]", $encoding)
+}
 
 Set-GlobalConstant -Name "X_TEMP_DIR_NAME" -Value ".PsCoreFxsTemp"
 Set-GlobalConstant -Name "X_TEMP_DIR" -Value "$(Get-UserHome)/$X_TEMP_DIR_NAME"
