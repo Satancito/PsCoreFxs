@@ -1748,7 +1748,7 @@ function Join-CompileCommandsJson {
     }
     $jsonContent = $jsonContent.ToString().TrimEnd().TrimEnd(',') + "]" 
     $jsonContent = (ConvertFrom-Json $jsonContent) | ConvertTo-Json -Depth 100
-    [System.IO.File]::AppendAllText($CompilationDatabase, $jsonContent, $encoding)
+    [System.IO.File]::WriteAllText($CompilationDatabase, $jsonContent, $encoding)
 }
 
 Set-GlobalConstant -Name "X_TEMP_DIR_NAME" -Value ".PsCoreFxsTemp"
