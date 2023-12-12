@@ -1686,10 +1686,10 @@ function Test-ExternalCommand {
     )
     try {
         if ($NoOutput.IsPresent) {
-            Invoke-Expression -Command $Command | Out-Null
+            Invoke-Expression -Command "& $Command" | Out-Null
         }
         else {
-            Invoke-Expression -Command $Command | Out-Host
+            Invoke-Expression -Command "& $Command" | Out-Host
         }
         $exitCode = $LASTEXITCODE
         if (!($NoOutput.IsPresent)) {
