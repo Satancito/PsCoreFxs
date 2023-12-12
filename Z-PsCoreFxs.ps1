@@ -1403,7 +1403,7 @@ function Test-GitRepository {
     }
     try {
         Push-Location $Path
-        $result = $(Test-Command "git rev-parse --is-inside-work-tree --quiet" -NoOutput)
+        $result = $(Test-ExternalCommand "git rev-parse --is-inside-work-tree --quiet" -NoOutput)
         return $result
     }
     finally {
@@ -1452,7 +1452,7 @@ function Add-GitSafeDirectory {
     {
         throw "Invalid path: $Path"
     }
-    $null = Test-Command "git config --$ConfigFile --fixed-value --replace-all safe.directory ""$Path"" ""$Path""" -ThrowOnFailure
+    $null = Test-ExternalCommand "git config --$ConfigFile --fixed-value --replace-all safe.directory ""$Path"" ""$Path""" -ThrowOnFailure
     
 }
 
@@ -1474,9 +1474,9 @@ function Reset-GitRepository {
     {
         try {
             Push-Location "$Path"
-            $null = Test-Command "git fetch $RemoteName $BranchName" -ThrowOnFailure
-            $null = Test-Command "git reset --hard $RemoteName/$BranchName" -ThrowOnFailure
-            $null = Test-Command "git checkout $BranchName" -ThrowOnFailure
+            $null = Test-ExternalCommand "git fetch $RemoteName $BranchName" -ThrowOnFailure
+            $null = Test-ExternalCommand "git reset --hard $RemoteName/$BranchName" -ThrowOnFailure
+            $null = Test-ExternalCommand "git checkout $BranchName" -ThrowOnFailure
         }
         finally {
             Pop-Location 
@@ -1543,7 +1543,7 @@ function Install-GitRepository {
     else {
         Remove-Item -Path "$Path" -Force -Recurse -ErrorAction Ignore
         New-Item -Path "$Path" -Force -ItemType Directory | Out-Null
-        $null =  Test-Command "git clone ""$Url"" ""$Path""" -ThrowOnFailure
+        $null =  Test-ExternalCommand "git clone ""$Url"" ""$Path""" -ThrowOnFailure
         Add-GitSafeDirectory -ConfigFile $ConfigFile -Path $Path
     }
 }
@@ -1667,7 +1667,7 @@ function Show-ProjectUserSecrets {
 
 }
 
-function Test-Command {
+function Test-ExternalCommand {
     param (
         [string]$Command,
 
