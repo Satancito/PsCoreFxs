@@ -1675,7 +1675,14 @@ function Test-Command {
         $NoOutput, 
 
         [switch]
-        $ThrowOnFailure 
+        $ThrowOnFailure,
+
+        [switch]
+        $ShowExitCode,
+
+        [int[]]
+        $AllowedExitCodes = @(0)
+
     )
     try {
         if ($NoOutput.IsPresent) {
@@ -1685,8 +1692,13 @@ function Test-Command {
             Invoke-Expression -Command $Command | Out-Host
         }
         $exitCode = $LASTEXITCODE
-
-        if ($exitCode -eq 0) {
+        if (!($NoOutput.IsPresent)) {
+            if($ShowExitCode.IsPresent)
+            {
+                Write-Host "ExitCode: $exitCode"
+            }
+        }
+        if ($exitCode -in $AllowedExitCodes) {
             if (!($NoOutput.IsPresent)) {
                 Write-Host "✅ Command: $Command "
             }
