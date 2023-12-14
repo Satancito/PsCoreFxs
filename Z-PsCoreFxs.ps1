@@ -1456,7 +1456,7 @@ function Add-GitSafeDirectory {
     
 }
 
-function Reset-GitRepository {
+function Reset-GitRepositoryHard {
     param (
         [Parameter(Mandatory=$true)]
         [string]
@@ -1522,7 +1522,7 @@ function Install-GitRepository {
     if ($isRepo) {
         if(Test-GitRemoteUrl -Url $Url -Path $Path)
         {
-            Reset-GitRepository -Path "$Path" -RemoteName "$RemoteName" -BranchName "$BranchName"
+            Reset-GitRepositoryHard -Path "$Path" -RemoteName "$RemoteName" -BranchName "$BranchName"
             Add-GitSafeDirectory -ConfigFile $ConfigFile -Path $Path
         }
         else
