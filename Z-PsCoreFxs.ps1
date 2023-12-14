@@ -1493,23 +1493,16 @@ function Update-GitSubmodules {
 
         [Parameter()]
         [switch]
-        $Force,
-
-        [Parameter()]
-        [switch]
-        $ThrowOnFailure
+        $Force
     )
     
     try {
         Push-Location "$Path"
-        $null = Test-ExternalCommand -Command "git submodule init" -ThrowOnFailure:$ThrowOnFailure
-        $null = Test-ExternalCommand -Command "git submodule update --remote --recursive $($Force.IsPresent ? "--force" : [string]::Empty)" -ThrowOnFailure:$ThrowOnFailure
+        $null = Test-ExternalCommand -Command "git submodule init" -ThrowOnFailure
+        $null = Test-ExternalCommand -Command "git submodule update --remote --recursive $($Force.IsPresent ? "--force" : [string]::Empty)" -ThrowOnFailure
     }
     catch {
-        if($ThrowOnFailure.IsPresent)
-        {
             throw "Error: Update-GitSubmodules"
-        }
     }
     finally {
         Pop-Location
