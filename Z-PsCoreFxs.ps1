@@ -1387,7 +1387,8 @@ function Get-WslPath {
         $result = "/mnt/$drive" + ($Path -replace '^([A-Za-z]):\\', '/')
         $result = $result.Replace("\", "/")
         return $result 
-    } else {
+    }
+    else {
         throw "Invalid path '$Path'."
     }
 }
@@ -1427,8 +1428,7 @@ function Test-GitRemoteUrl {
         $remoteUrl = & git remote get-url origin
         return ($remoteUrl -eq $Url)
     }
-    catch
-    {
+    catch {
         return $false
     }
     finally {
@@ -1438,7 +1438,7 @@ function Test-GitRemoteUrl {
 
 function Add-GitSafeDirectory {
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $Path, 
 
@@ -1448,8 +1448,7 @@ function Add-GitSafeDirectory {
         $ConfigFile = "global"
 
     )
-    if(!(Test-Path $Path -PathType Container))
-    {
+    if (!(Test-Path $Path -PathType Container)) {
         throw "Invalid path: $Path"
     }
     $null = Test-ExternalCommand "git config --$ConfigFile --fixed-value --replace-all safe.directory ""$Path"" ""$Path""" -ThrowOnFailure
@@ -1458,7 +1457,7 @@ function Add-GitSafeDirectory {
 
 function Reset-GitRepositoryHard {
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $Path,
 
@@ -1470,8 +1469,7 @@ function Reset-GitRepositoryHard {
         [string]
         $BranchName = "main"
     )
-    if(Test-GitRepository $Path)
-    {
+    if (Test-GitRepository $Path) {
         try {
             Push-Location "$Path"
             $null = Test-ExternalCommand "git fetch $RemoteName $BranchName" -ThrowOnFailure
@@ -1482,9 +1480,39 @@ function Reset-GitRepositoryHard {
             Pop-Location 
         }
     }
-    else
-    {
+    else {
         throw "Path ""$Path"" is not a repository."
+    }
+}
+
+function Update-GitSubmodules {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Path,
+
+        [Parameter()]
+        [switch]
+        $Force,
+
+        [Parameter()]
+        [switch]
+        $ThrowOnFailure
+    )
+    
+    try {
+        Push-Location "$Path"
+        $null = Test-ExternalCommand -Command "git submodule init" -ThrowOnFailure:$ThrowOnFailure
+        $null = Test-ExternalCommand -Command "git submodule update --remote --recursive $($Force.IsPresent ? "--force" : [string]::Empty)" -ThrowOnFailure:$ThrowOnFailure
+    }
+    catch {
+        if($ThrowOnFailure.IsPresent)
+        {
+            throw "Error: Update-GitSubmodules"
+        }
+    }
+    finally {
+        Pop-Location
     }
 }
 
@@ -1520,22 +1548,18 @@ function Install-GitRepository {
     $isRepo = Test-GitRepository $Path
 
     if ($isRepo) {
-        if(Test-GitRemoteUrl -Url $Url -Path $Path)
-        {
+        if (Test-GitRemoteUrl -Url $Url -Path $Path) {
             Reset-GitRepositoryHard -Path "$Path" -RemoteName "$RemoteName" -BranchName "$BranchName"
             Add-GitSafeDirectory -ConfigFile $ConfigFile -Path $Path
         }
-        else
-        {
-            if($Force.IsPresent)
-            {
+        else {
+            if ($Force.IsPresent) {
                 Remove-Item -Path "$Path" -Force -Recurse -ErrorAction Ignore
                 New-Item -Path "$Path" -Force -ItemType Directory | Out-Null
                 git clone "$Url" "$Path"
                 Add-GitSafeDirectory -ConfigFile $ConfigFile -Path $Path
             }
-            else
-            {
+            else {
                 throw "It seems there is a different Git repository in path ""$Path"". Use -Force to replace directory."
             }
         }   
@@ -1543,7 +1567,7 @@ function Install-GitRepository {
     else {
         Remove-Item -Path "$Path" -Force -Recurse -ErrorAction Ignore
         New-Item -Path "$Path" -Force -ItemType Directory | Out-Null
-        $null =  Test-ExternalCommand "git clone ""$Url"" ""$Path""" -ThrowOnFailure
+        $null = Test-ExternalCommand "git clone ""$Url"" ""$Path""" -ThrowOnFailure
         Add-GitSafeDirectory -ConfigFile $ConfigFile -Path $Path
     }
 }
@@ -1693,8 +1717,7 @@ function Test-ExternalCommand {
         }
         $exitCode = $LASTEXITCODE
         if (!($NoOutput.IsPresent)) {
-            if($ShowExitCode.IsPresent)
-            {
+            if ($ShowExitCode.IsPresent) {
                 Write-Host "ExitCode: $exitCode"
             }
         }
