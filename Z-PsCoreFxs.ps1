@@ -1833,3 +1833,4 @@ Set-GlobalConstant -Name "ALL_PROVIDER" -Value "All"
 
 Set-GlobalConstant -Name "7ZIP_URI" -Value "https://www.7-zip.org/a/7z2201-x64.exe"
 Set-GlobalConstant -Name "NUGET_ORG_URI" -Value "https://api.nuget.org/v3/index.json"
+Set-GlobalConstant -Name "PS_CORE_FXS_REPO_URL" -Value "https://github.com/Satancito/PsCoreFxs.git" 
