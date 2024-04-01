@@ -1502,7 +1502,7 @@ function Update-GitSubmodules {
         $null = Test-ExternalCommand -Command "git submodule update --remote --recursive $($Force.IsPresent ? "--force" : [string]::Empty)" -ThrowOnFailure
     }
     catch {
-            throw "Error: Update-GitSubmodules"
+        throw "Error: Update-GitSubmodules"
     }
     finally {
         Pop-Location
@@ -1771,6 +1771,122 @@ function Get-GitRepositoryRemoteUrl {
     }
 }
 
+function Use-Disposable {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [AllowEmptyCollection()]
+        [AllowNull()]
+        [Object]
+        $InputObject,
+
+        [Parameter(Mandatory = $true)]
+        [scriptblock]
+        $ScriptBlock
+    )
+
+    try {
+        . $ScriptBlock
+    }
+    finally {
+        if ($null -ne $InputObject -and $InputObject -is [System.IDisposable]) {
+            $InputObject.Dispose()
+        }
+    }
+}
+
+function Test-HttpUri {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string]
+        $Uri
+    )
+    Use-Disposable($client = New-Object System.Net.Http.HttpClient) {
+        try {
+            $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Head, $Uri)
+            $response = $client. SendAsync($request).WaitAsync([timespan]::FromSeconds(5)).Result
+            return ($response.StatusCode -eq 'OK')
+        }
+        finally {
+        }
+        return $false;
+    }
+}
+
+function Invoke-DownloadWebFile {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Uri,
+
+        [Parameter(Mandatory = $true)]
+        [string]
+        $DownloadDir,
+
+        [Parameter()]
+        [string]
+        $DownloadFileName = [string]::Empty,
+
+        [Parameter()]
+        [string]
+        $Hash = [string]::Empty,
+
+        [Parameter()]
+        [string]
+        [ValidateSet("SHA1", "SHA256", "SHA384", "SHA512", "MD5")]
+        $HashAlgorithm = "SHA1",
+
+        [Parameter()]
+        [switch]
+        $ForceDownload,
+
+        
+        [Parameter()]
+        [switch]
+        $NoOutput
+    )
+    if (!$NoOutput.IsPresent) {
+        Write-Host
+        Write-InfoBlue "Downloading: $Uri"
+        Write-Host
+    }
+    if (!(Test-HttpUri -Uri "$Uri")) {
+        throw "Resource is offline or invalid uri `"$Uri`"."
+    }
+
+    New-Item -Path "$DownloadDir" -ItemType Directory -Force | Out-Null
+    $filename = [string]::IsNullOrWhiteSpace($DownloadFileName) ? "$DownloadDir/$([System.IO.Path]::GetFileName("$Uri"))" : "$DownloadDir/$DownloadFileName"
+    $download = $ForceDownload.IsPresent -or (!(Test-Path -Path "$filename" -PathType Leaf))
+    if (![string]::IsNullOrWhiteSpace($Hash) -and !$download) {
+        $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
+        $download = $download -or (!$Hash.Equals($fileHash))
+        if (!$NoOutput.IsPresent) {
+            Write-Host "Compute download `"$filename`". "
+        }
+    }
+    if ($download) {
+        Invoke-WebRequest -Uri "$Uri" -OutFile "$filename" 
+        if (!$NoOutput.IsPresent) {
+            Write-Host "Downloading `"$filename`". "
+        }
+    }
+    else {
+        if (!$NoOutput.IsPresent) {
+            Write-Host "Already downloaded `"$filename`". "
+        }
+    }
+
+    if (![string]::IsNullOrWhiteSpace($Hash)) {
+        $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
+        if (!$Hash.Equals($fileHash)) {
+            throw "Verification error. Hashes are different: $Hash <> $fileHash; file: `"$filename`""
+        }
+    }
+}
+
 # █████ Extras █████
 
 class BotanVersionSet : System.Management.Automation.IValidateSetValuesGenerator {
@@ -1821,6 +1937,8 @@ function Join-CompileCommandsJson {
     $json = $jsonContent.ToString().Trim().TrimEnd(',') + "]"
     [System.IO.File]::WriteAllText($CompilationDatabase, $json, $encoding)
 }
+
+
 
 Set-GlobalConstant -Name "X_TEMP_DIR_NAME" -Value ".PsCoreFxsTemp"
 Set-GlobalConstant -Name "X_TEMP_DIR" -Value "$(Get-UserHome)/$X_TEMP_DIR_NAME"
