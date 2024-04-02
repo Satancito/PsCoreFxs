@@ -1824,11 +1824,11 @@ function Invoke-HttpDownload {
 
         [Parameter(Mandatory = $true)]
         [string]
-        $DownloadDir,
+        $DestinationPath,
 
         [Parameter()]
         [string]
-        $DownloadFileName = [string]::Empty,
+        $Name = [string]::Empty,
 
         [Parameter()]
         [string]
@@ -1842,7 +1842,6 @@ function Invoke-HttpDownload {
         [Parameter()]
         [switch]
         $ForceDownload,
-
         
         [Parameter()]
         [switch]
@@ -1857,12 +1856,12 @@ function Invoke-HttpDownload {
         throw "Resource is offline or invalid uri `"$Uri`"."
     }
 
-    New-Item -Path "$DownloadDir" -ItemType Directory -Force | Out-Null
-    $filename = [string]::IsNullOrWhiteSpace($DownloadFileName) ? "$DownloadDir/$([System.IO.Path]::GetFileName("$Uri"))" : "$DownloadDir/$DownloadFileName"
+    New-Item -Path "$DestinationPath" -ItemType Directory -Force | Out-Null
+    $filename = [string]::IsNullOrWhiteSpace($Name) ? "$DestinationPath/$([System.IO.Path]::GetFileName("$Uri"))" : "$DestinationPath/$Name"
     $download = $ForceDownload.IsPresent -or (!(Test-Path -Path "$filename" -PathType Leaf))
     if (![string]::IsNullOrWhiteSpace($Hash) -and !$download) {
         if (!$NoOutput.IsPresent) {
-            Write-Host "Computing download `"$filename`". "
+            Write-Host "Preparing download `"$filename`". "
         }
         $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
         $download = $download -or (!$Hash.Equals($fileHash))
