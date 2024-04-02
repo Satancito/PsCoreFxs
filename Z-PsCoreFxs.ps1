@@ -1867,14 +1867,14 @@ function Invoke-HttpDownload {
         $download = $download -or (!$Hash.Equals($fileHash))
     }
     if ($download) {
-        Invoke-WebRequest -Uri "$Uri" -OutFile "$filename" 
         if (!$NoOutput.IsPresent) {
-            Write-Host "Downloading `"$filename`". "
+            Write-Host "Saving `"$filename`". "
         }
+        Invoke-WebRequest -Uri "$Uri" -OutFile "$filename" 
     }
     else {
         if (!$NoOutput.IsPresent) {
-            Write-Host "Already downloaded `"$filename`". "
+            Write-Host "Already downloaded `"$filename`". Skipping download."
         }
     }
 
@@ -1886,6 +1886,52 @@ function Invoke-HttpDownload {
     }
 }
 
+function Expand-TarXzArchive {
+    [CmdletBinding()]
+    param (
+        
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Path,
+        
+        [Parameter()]
+        [string]
+        $DestinationPath = [string]::Empty,
+
+        [Parameter()]
+        [switch]
+        $NoOutput
+    )
+    if (!$NoOutput.IsPresent) {
+        Write-Host
+        Write-InfoBlue "Expanding: $Path"
+        Write-Host
+    }  
+    if (!($Path.ToLower().EndsWith("tar.xz"))) {
+        throw "Invalid file extension. File: `"$($Path)`"."
+    }
+    $tarXzFile = $Path
+    $tarFile = "$($Path | Split-Path)/$([System.IO.Path]::GetFileNameWithoutExtension($Path))"
+    if ($IsWindows) {
+        if ($NoOutput.IsPresent) {
+            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile" | Out-Null
+            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile" | Out-Null
+        }
+        else {
+            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile"
+            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile"
+        }
+        Remove-Item -Force -Path "$tarFile" -ErrorAction Ignore
+    }
+    if ($IsLinux -or $IsMacOS) {
+        if ($NoOutput.IsPresent) {
+            tar -xf "$Path" -C "$DestinationPath" --overwrite | Out-Null
+        }
+        else {
+            tar -xf "$Path" -C "$DestinationPath" --overwrite
+        }
+    }  
+}
 # █████ Extras █████
 
 class BotanVersionSet : System.Management.Automation.IValidateSetValuesGenerator {
