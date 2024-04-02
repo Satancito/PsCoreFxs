@@ -1815,7 +1815,7 @@ function Test-HttpUri {
     }
 }
 
-function Invoke-DownloadWebFile {
+function Invoke-HttpDownload {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
@@ -1861,11 +1861,11 @@ function Invoke-DownloadWebFile {
     $filename = [string]::IsNullOrWhiteSpace($DownloadFileName) ? "$DownloadDir/$([System.IO.Path]::GetFileName("$Uri"))" : "$DownloadDir/$DownloadFileName"
     $download = $ForceDownload.IsPresent -or (!(Test-Path -Path "$filename" -PathType Leaf))
     if (![string]::IsNullOrWhiteSpace($Hash) -and !$download) {
+        if (!$NoOutput.IsPresent) {
+            Write-Host "Computing download `"$filename`". "
+        }
         $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
         $download = $download -or (!$Hash.Equals($fileHash))
-        if (!$NoOutput.IsPresent) {
-            Write-Host "Compute download `"$filename`". "
-        }
     }
     if ($download) {
         Invoke-WebRequest -Uri "$Uri" -OutFile "$filename" 
