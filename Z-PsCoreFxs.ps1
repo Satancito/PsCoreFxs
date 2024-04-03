@@ -1907,7 +1907,7 @@ function Expand-TarXzArchive {
         Write-InfoBlue "Expanding: $Path"
         Write-Host
     }  
-    if (!($Path.ToLower().EndsWith("tar.xz"))) {
+    if (!($Path.ToLower().EndsWith(".tar.xz"))) {
         throw "Invalid file extension. File: `"$($Path)`"."
     }
     $tarXzFile = $Path
@@ -1932,6 +1932,49 @@ function Expand-TarXzArchive {
         }
     }  
 }
+
+function Expand-ZipArchive {
+    [CmdletBinding()]
+    param (
+        
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Path,
+        
+        [Parameter()]
+        [string]
+        $DestinationPath = [string]::Empty,
+
+        [Parameter()]
+        [switch]
+        $NoOutput
+    )
+    if (!$NoOutput.IsPresent) {
+        Write-Host
+        Write-InfoBlue "Expanding: $Path"
+        Write-Host
+    }  
+    if (!($Path.ToLower().EndsWith(".zip"))) {
+        throw "Invalid file extension. File: `"$($Path)`"."
+    }
+    if ($IsWindows) {
+        if ($NoOutput.IsPresent) {
+            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path" | Out-Null
+        }
+        else {
+            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path"
+        }
+    }
+    if ($IsLinux -or $IsMacOS) {
+        if ($NoOutput.IsPresent) {
+            & unzip "$Path" -d "$DestinationPath" -o | Out-Null
+        }
+        else {
+            & unzip "$Path" -d "$DestinationPath" -o
+        }
+    }  
+}
+
 # █████ Extras █████
 
 class BotanVersionSet : System.Management.Automation.IValidateSetValuesGenerator {
