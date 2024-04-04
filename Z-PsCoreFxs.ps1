@@ -1382,9 +1382,9 @@ function Get-WslPath {
     param (
         [string]$Path
     )
-    if ($Path -match '^([A-Za-z]):\\') {
+    if ($Path -match '^([A-Za-z]):[\\\/]') {
         $drive = $matches[1].ToLower()
-        $result = "/mnt/$drive" + ($Path -replace '^([A-Za-z]):\\', '/')
+        $result = "/mnt/$drive" + ($Path -replace '^([A-Za-z]):[\\\/]', '/')
         $result = $result.Replace("\", "/")
         return $result 
     }
