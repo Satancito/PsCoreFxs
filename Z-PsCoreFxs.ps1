@@ -2001,7 +2001,9 @@ function Join-CompileCommandsJson {
     [System.IO.File]::WriteAllText($CompilationDatabase, $json, $encoding)
 }
 
-
+function New-CppLibsDir {
+    New-Item -Path "$(Get-UserHome)/.CppLibs" -ItemType Directory -Force | Out-Null
+}
 
 Set-GlobalConstant -Name "X_TEMP_DIR_NAME" -Value ".PsCoreFxsTemp"
 Set-GlobalConstant -Name "X_TEMP_DIR" -Value "$(Get-UserHome)/$X_TEMP_DIR_NAME"
