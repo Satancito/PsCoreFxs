@@ -1929,6 +1929,7 @@ function Expand-TarXzArchive {
         }
         else {
             tar -xf "$Path" -C "$DestinationPath" --overwrite
+            Write-Host "Finished expand."
         }
     }  
 }
@@ -1971,6 +1972,7 @@ function Expand-ZipArchive {
         }
         else {
             & unzip "$Path" -d "$DestinationPath" -o
+            Write-Host "Finished expand."
         }
     }  
 }
