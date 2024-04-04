@@ -1820,7 +1820,7 @@ function Invoke-HttpDownload {
     param (
         [Parameter(Mandatory = $true)]
         [string]
-        $Uri,
+        $Url,
 
         [Parameter(Mandatory = $true)]
         [string]
@@ -1849,15 +1849,15 @@ function Invoke-HttpDownload {
     )
     if (!$NoOutput.IsPresent) {
         Write-Host
-        Write-InfoBlue "Downloading: $Uri"
+        Write-InfoBlue "Downloading: $Url"
         Write-Host
     }
-    if (!(Test-HttpUri -Uri "$Uri")) {
-        throw "Resource is offline or invalid uri `"$Uri`"."
+    if (!(Test-HttpUri -Uri "$Url")) {
+        throw "Resource is offline or invalid uri `"$Url`"."
     }
 
     New-Item -Path "$DestinationPath" -ItemType Directory -Force | Out-Null
-    $filename = [string]::IsNullOrWhiteSpace($Name) ? "$DestinationPath/$([System.IO.Path]::GetFileName("$Uri"))" : "$DestinationPath/$Name"
+    $filename = [string]::IsNullOrWhiteSpace($Name) ? "$DestinationPath/$([System.IO.Path]::GetFileName("$Url"))" : "$DestinationPath/$Name"
     $download = $ForceDownload.IsPresent -or (!(Test-Path -Path "$filename" -PathType Leaf))
     if (![string]::IsNullOrWhiteSpace($Hash) -and !$download) {
         if (!$NoOutput.IsPresent) {
@@ -1870,7 +1870,7 @@ function Invoke-HttpDownload {
         if (!$NoOutput.IsPresent) {
             Write-Host "Saving `"$filename`". "
         }
-        Invoke-WebRequest -Uri "$Uri" -OutFile "$filename" 
+        Invoke-WebRequest -Uri "$Url" -OutFile "$filename" 
     }
     else {
         if (!$NoOutput.IsPresent) {
@@ -1973,31 +1973,6 @@ function Expand-ZipArchive {
             & unzip "$Path" -d "$DestinationPath" -o
         }
     }  
-}
-
-# █████ Extras █████
-
-class BotanVersionSet : System.Management.Automation.IValidateSetValuesGenerator {
-    [String[]] GetValidValues() {
-        return @("2.19.3")
-    }
-}
-
-
-function Install-BotanLibrary {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet([BotanVersionSet], IgnoreCase = $false, ErrorMessage = "Value `"{0}`" is invalid. Try one of: `"{1}`"")]
-        [string]
-        $Version
-    )
-    $folder = "Botan-$Version"
-    $filename = "$folder.tar.xz"
-    $botanUri = "https://botan.randombit.net/releases/$fileName"
-    Invoke-WebRequest -Uri "$botanUri" -OutFile $filename -Headers @{"Cache-Control" = "no-cache" } | Out-Null
-    Write-Host "$Version"
-    #& "$(Select-ValueByPlatform -WindowsValue "tar -xvf $filename" -LinuxValue "" -MacOSValue "")"
 }
 
 function Join-CompileCommandsJson {
