@@ -1861,14 +1861,14 @@ function Invoke-HttpDownload {
     $download = $ForceDownload.IsPresent -or (!(Test-Path -Path "$filename" -PathType Leaf))
     if (![string]::IsNullOrWhiteSpace($Hash) -and !$download) {
         if (!$NoOutput.IsPresent) {
-            Write-Host "Preparing download `"$filename`". "
+            Write-Host "Preparing download `"$filename`"."
         }
         $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
         $download = $download -or (!$Hash.Equals($fileHash))
     }
     if ($download) {
         if (!$NoOutput.IsPresent) {
-            Write-Host "Saving `"$filename`". "
+            Write-Host "Saving `"$filename`"."
         }
         Invoke-WebRequest -Uri "$Url" -OutFile "$filename" 
     }
@@ -1881,7 +1881,7 @@ function Invoke-HttpDownload {
     if (![string]::IsNullOrWhiteSpace($Hash)) {
         $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
         if (!$Hash.Equals($fileHash)) {
-            throw "Verification error. Hashes are different: $Hash <> $fileHash; file: `"$filename`""
+            throw "Verification error. Hashes are different: $Hash <> $fileHash; file: `"$filename`"."
         }
     }
 }
@@ -1905,7 +1905,6 @@ function Expand-TarXzArchive {
     if (!$NoOutput.IsPresent) {
         Write-Host
         Write-InfoBlue "Expanding: $Path"
-        Write-Host
     }  
     if (!($Path.ToLower().EndsWith(".tar.xz"))) {
         throw "Invalid file extension. File: `"$($Path)`"."
@@ -1953,7 +1952,6 @@ function Expand-ZipArchive {
     if (!$NoOutput.IsPresent) {
         Write-Host
         Write-InfoBlue "Expanding: $Path"
-        Write-Host
     }  
     if (!($Path.ToLower().EndsWith(".zip"))) {
         throw "Invalid file extension. File: `"$($Path)`"."
