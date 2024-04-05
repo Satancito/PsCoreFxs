@@ -1913,12 +1913,12 @@ function Expand-TarXzArchive {
     $tarFile = "$($Path | Split-Path)/$([System.IO.Path]::GetFileNameWithoutExtension($Path))"
     if ($IsWindows) {
         if ($NoOutput.IsPresent) {
-            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile" | Out-Null
-            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile" | Out-Null
+            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile" | Out-Null
+            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile" | Out-Null
         }
         else {
-            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile"
-            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile"
+            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile"
+            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile"
         }
         Remove-Item -Force -Path "$tarFile" -ErrorAction Ignore
     }
@@ -1958,10 +1958,10 @@ function Expand-ZipArchive {
     }
     if ($IsWindows) {
         if ($NoOutput.IsPresent) {
-            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path" | Out-Null
+            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path" | Out-Null
         }
         else {
-            & "$_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path"
+            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path"
         }
     }
     if ($IsLinux -or $IsMacOS) {
