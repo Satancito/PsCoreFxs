@@ -2005,8 +2005,8 @@ function New-CppLibsDir {
     New-Item -Path "$(Get-UserHome)/.CppLibs" -ItemType Directory -Force | Out-Null
 }
 
-Set-GlobalConstant -Name "X_TEMP_DIR_NAME" -Value ".PsCoreFxsTemp"
-Set-GlobalConstant -Name "X_TEMP_DIR" -Value "$(Get-UserHome)/$X_TEMP_DIR_NAME"
+Set-GlobalConstant -Name "__7_ZIP_EXE" -Value "C:\Program Files\7-Zip\7z.exe"
+Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreFxs"
 
 Set-GlobalConstant -Name "SQLSERVER_PROVIDER" -Value "SqlServer"
 Set-GlobalConstant -Name "POSTGRESQL_PROVIDER" -Value "PostgreSql"
@@ -2014,6 +2014,5 @@ Set-GlobalConstant -Name "MYSQL_PROVIDER" -Value "MySql"
 Set-GlobalConstant -Name "ORACLE_PROVIDER" -Value "Oracle"
 Set-GlobalConstant -Name "ALL_PROVIDER" -Value "All"
 
-Set-GlobalConstant -Name "7ZIP_URI" -Value "https://www.7-zip.org/a/7z2201-x64.exe"
 Set-GlobalConstant -Name "NUGET_ORG_URI" -Value "https://api.nuget.org/v3/index.json"
 Set-GlobalConstant -Name "PS_CORE_FXS_REPO_URL" -Value "https://github.com/Satancito/PsCoreFxs.git" 
