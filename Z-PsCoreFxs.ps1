@@ -2002,10 +2002,27 @@ function Join-CompileCommandsJson {
 }
 
 function New-CppLibsDir {
-    New-Item -Path "$(Get-UserHome)/.CppLibs" -ItemType Directory -Force | Out-Null
+    New-Item -Path "$__CPP_LIBS_DIR" -ItemType Directory -Force | Out-Null
+}
+
+function Get-OsName {
+    if($IsWindows)
+    {
+        return (Get-CimInstance Win32_OperatingSystem).Caption
+    }
+    if($IsLinux)
+    {
+        return "$(& lsb_release -d)".Split(":")[1].Trim()
+    }
+    if($IsMacOS)
+    {
+        return "$(& sw_vers -productName) $(& sw_vers -productVersion)"
+    }
+    throw "Not supported, unknown operating system."
 }
 
 Set-GlobalConstant -Name "__7_ZIP_EXE" -Value "C:\Program Files\7-Zip\7z.exe"
+Set-GlobalConstant -Name "__CPP_LIBS_DIR" -Value "$(Get-UserHome)/.CppLibs"
 Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreFxs"
 
 Set-GlobalConstant -Name "SQLSERVER_PROVIDER" -Value "SqlServer"
@@ -2014,5 +2031,5 @@ Set-GlobalConstant -Name "MYSQL_PROVIDER" -Value "MySql"
 Set-GlobalConstant -Name "ORACLE_PROVIDER" -Value "Oracle"
 Set-GlobalConstant -Name "ALL_PROVIDER" -Value "All"
 
-Set-GlobalConstant -Name "NUGET_ORG_URI" -Value "https://api.nuget.org/v3/index.json"
-Set-GlobalConstant -Name "PS_CORE_FXS_REPO_URL" -Value "https://github.com/Satancito/PsCoreFxs.git" 
+Set-GlobalConstant -Name "__NUGET_ORG_V3_URI" -Value "https://api.nuget.org/v3/index.json"
+Set-GlobalConstant -Name "__PSCOREFXS_REPO_URL" -Value "https://github.com/Satancito/PsCoreFxs.git" 
