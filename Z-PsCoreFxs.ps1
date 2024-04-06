@@ -1912,12 +1912,12 @@ function Expand-TarXzArchive {
     $tarFile = "$($Path | Split-Path)/$([System.IO.Path]::GetFileNameWithoutExtension($Path))"
     if ($IsWindows) {
         if ($NoOutput.IsPresent) {
-            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile" | Out-Null
-            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile" | Out-Null
+            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile" | Out-Null
+            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile" | Out-Null
         }
         else {
-            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile"
-            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile"
+            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile"
+            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile"
         }
         Remove-Item -Force -Path "$tarFile" -ErrorAction Ignore
     }
@@ -1957,10 +1957,10 @@ function Expand-ZipArchive {
     }
     if ($IsWindows) {
         if ($NoOutput.IsPresent) {
-            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path" | Out-Null
+            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path" | Out-Null
         }
         else {
-            & "$__7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path"
+            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path"
         }
     }
     if ($IsLinux -or $IsMacOS) {
@@ -2001,7 +2001,11 @@ function Join-CompileCommandsJson {
 }
 
 function New-CppLibsDir {
-    New-Item -Path "$__CPP_LIBS_DIR" -ItemType Directory -Force | Out-Null
+    New-Item -Path "$__PSCOREFXS_CPP_LIBS_DIR" -ItemType Directory -Force | Out-Null
+}
+
+function Get-CppLibsDir {
+    return "$__PSCOREFXS_CPP_LIBS_DIR"
 }
 
 function Get-OsName {
@@ -2083,7 +2087,7 @@ function Set-Vcvars {
     Write-InfoBlue "Running: $vcvars"
     Write-Host
 
-    $pattern = "^([^\s=]+)=(.+)$"
+    $pattern = "^([^\s=]+)=(.*)$"
     & cmd /c """$vcvars"" $Parameters  && SET" | . { process {
             $result = [System.Text.RegularExpressions.Regex]::Matches($_, $pattern)
             if ($result.Success) {
@@ -2091,7 +2095,7 @@ function Set-Vcvars {
                 if ($ShowValues.IsPresent) {
                     Write-Host "$($result.Groups[1].Value)" -NoNewline -ForegroundColor Green
                     Write-Host "=" -NoNewline -ForegroundColor Yellow
-                    Write-Host  "$($result.Groups[2].Value)" -ForegroundColor White
+                    Write-Host  "`"$($result.Groups[2].Value)`"" -ForegroundColor White
                 }
             }
             else {
@@ -2102,8 +2106,8 @@ function Set-Vcvars {
     Write-Host      
 }
 
-Set-GlobalConstant -Name "__7_ZIP_EXE" -Value "C:\Program Files\7-Zip\7z.exe"
-Set-GlobalConstant -Name "__CPP_LIBS_DIR" -Value "$(Get-UserHome)/.CppLibs"
+Set-GlobalConstant -Name "__PSCOREFXS_7_ZIP_EXE" -Value "C:\Program Files\7-Zip\7z.exe"
+Set-GlobalConstant -Name "__PSCOREFXS_CPP_LIBS_DIR" -Value "$(Get-UserHome)/.CppLibs"
 
 Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreFxs"
 
