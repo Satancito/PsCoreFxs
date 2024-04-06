@@ -90,8 +90,7 @@ function Set-GlobalConstant {
         [System.String]
         $Name,
 
-        [Parameter(Mandatory = $True, Position = 1, ValueFromPipeline = $true)]
-        [ValidateNotNullOrEmpty()]
+        [Parameter(Mandatory = $false, Position = 1, ValueFromPipeline = $true)]
         [System.String]
         $Value
     )
@@ -2006,24 +2005,121 @@ function New-CppLibsDir {
 }
 
 function Get-OsName {
-    if($IsWindows)
-    {
+    if ($IsWindows) {
         return (Get-CimInstance Win32_OperatingSystem).Caption
     }
-    if($IsLinux)
-    {
+    if ($IsLinux) {
         return "$(& lsb_release -d)".Split(":")[1].Trim()
     }
-    if($IsMacOS)
-    {
+    if ($IsMacOS) {
         return "$(& sw_vers -productName) $(& sw_vers -productVersion)"
     }
     throw "Not supported, unknown operating system."
 }
 
+
+class VisualStudioVersionValidateSet : System.Management.Automation.IValidateSetValuesGenerator {
+    [String[]] GetValidValues() {
+        return @($Global:__PSCOREFXS_VISUAL_STUDIO_VERSION_2022)
+    }
+}
+
+class VisualStudioEditionValidateSet : System.Management.Automation.IValidateSetValuesGenerator {
+    [String[]] GetValidValues() {
+        return @($Global:__PSCOREFXS_VISUAL_STUDIO_EDITION_COMMUNITY, $Global:__PSCOREFXS_VISUAL_STUDIO_EDITION_PROFESSIONAL, $Global:__PSCOREFXS_VISUAL_STUDIO_EDITION_ENTERPRISE)
+    }
+}
+
+function Get-VcvarsScriptPath {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [ValidateSet([VisualStudioVersionValidateSet], IgnoreCase = $false, ErrorMessage = "Value `"{0}`" is invalid. Try one of: `"{1}`"")]
+        [string]
+        $VisualStudioVersion,
+
+        [Parameter()]
+        [ValidateSet([VisualStudioEditionValidateSet], IgnoreCase = $false, ErrorMessage = "Value `"{0}`" is invalid. Try one of: `"{1}`"")]
+        [string]    
+        $VisualStudioEdition
+    )
+    return "C:/Program Files/Microsoft Visual Studio/$VisualStudioVersion/$VisualStudioEdition/VC/Auxiliary/Build/vcvarsall.bat" 
+}
+
+function Set-Vcvars {
+    param (
+        [Parameter()]
+        [string[]]
+        $Parameters = @(),
+
+        [Parameter()]
+        [ValidateSet([VisualStudioVersionValidateSet], IgnoreCase = $false, ErrorMessage = "Value `"{0}`" is invalid. Try one of: `"{1}`"")]
+        [string]
+        $VisualStudioVersion,
+
+        [Parameter()]
+        [ValidateSet([VisualStudioEditionValidateSet], IgnoreCase = $false, ErrorMessage = "Value `"{0}`" is invalid. Try one of: `"{1}`"")]
+        [string]    
+        $VisualStudioEdition,
+
+        [Parameter()]
+        [switch]
+        $ShowValues
+    )
+
+    if (!$IsWindows) {
+        throw "Windows x64 operating system is required."
+    }
+    if (!($env:PROCESSOR_ARCHITECTURE -eq "AMD64")) {
+        throw "Windows x64 operating system is required."
+    }
+
+    Write-Host
+    Write-InfoGreen "Initialize environment "
+    $vcvars = Get-VcvarsScriptPath -VisualStudioVersion $VisualStudioVersion -VisualStudioEdition $VisualStudioEdition
+    if (!(Test-Path -Path $vcvars -PathType Leaf)) {
+        throw "Invalid vcvars file, it doesn't exist. ""$vcvars"""
+    }
+    Write-InfoBlue "Running: $vcvars"
+    Write-Host
+
+    $pattern = "^([^\s=]+)=(.+)$"
+    & cmd /c """$vcvars"" $Parameters  && SET" | . { process {
+            $result = [System.Text.RegularExpressions.Regex]::Matches($_, $pattern)
+            if ($result.Success) {
+                Set-LocalEnvironmentVariable "$($result.Groups[1].Value)" "$($result.Groups[2].Value)"
+                if ($ShowValues.IsPresent) {
+                    Write-Host "$($result.Groups[1].Value)" -NoNewline -ForegroundColor Green
+                    Write-Host "=" -NoNewline -ForegroundColor Yellow
+                    Write-Host  "$($result.Groups[2].Value)" -ForegroundColor White
+                }
+            }
+            else {
+                Write-InfoDarkGray $_
+            }
+        } 
+    }
+    Write-Host      
+}
+
 Set-GlobalConstant -Name "__7_ZIP_EXE" -Value "C:\Program Files\7-Zip\7z.exe"
 Set-GlobalConstant -Name "__CPP_LIBS_DIR" -Value "$(Get-UserHome)/.CppLibs"
+
 Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreFxs"
+
+Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_X86" -Value "x86"
+Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_X64" -Value "x64"
+Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_ARM" -Value "x64_arm"
+Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_ARM64" -Value "x64_arm64"
+
+Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_PLATFORM_TYPE_UWP" -Value "uwp"
+
+Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_VERSION_2022" -Value "2022"
+
+Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_EDITION_COMMUNITY" -Value "Community"
+Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_EDITION_PROFESSIONAL" -Value "Professional"
+Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_EDITION_ENTERPRISE" -Value "Enterprise"
+
 
 Set-GlobalConstant -Name "SQLSERVER_PROVIDER" -Value "SqlServer"
 Set-GlobalConstant -Name "POSTGRESQL_PROVIDER" -Value "PostgreSql"
