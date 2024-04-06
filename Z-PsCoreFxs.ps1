@@ -1702,7 +1702,7 @@ function Test-ExternalCommand {
     )
     try {
         if (!$NoOutput.IsPresent) {
-            Write-Host "Running ⚡: $Command"
+            Write-Host "⚡ Running: $Command"
         }
         if ($NoOutput.IsPresent) {
             Invoke-Expression -Command "& $Command" | Out-Null
@@ -1718,7 +1718,7 @@ function Test-ExternalCommand {
         }
         if ($exitCode -in $AllowedExitCodes) {
             if (!($NoOutput.IsPresent)) {
-                Write-Host "✅ Command: $Command "
+                Write-Host "✅ Command executed: $Command "
             }
             return $true
         }
@@ -1726,7 +1726,7 @@ function Test-ExternalCommand {
     }
     catch {
         if (!$NoOutput.IsPresent) {
-            Write-Host "❌ Command: $Command"
+            Write-Host "❌ Command executed: $Command"
         }
         if ($ThrowOnFailure) {
             throw "An error occurred while executing the command."
