@@ -107,6 +107,105 @@ function Set-GlobalVariable {
     }
 }
 
+# █ Output
+
+function Write-OutputIntroOutroMessage {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [object]
+        $Value = [string]::Empty,
+
+        [Parameter()]
+        [string]
+        $IntroFormat = [string]::Empty,
+
+        [Parameter()]
+        [string]
+        $OutroFormat = [string]::Empty,
+
+        [parameter()]
+        [System.ConsoleColor]
+        $ForegroundColor = [System.ConsoleColor]::ForegroundColor,
+
+        [parameter()]
+        [System.ConsoleColor]
+        $BackgroundColor = [System.Console]::BackgroundColor,
+
+        [parameter()]
+        [Switch]
+        $NoNewLine,
+
+        [Parameter()]
+        [switch]
+        $NoOutput,
+
+        [Parameter()]
+
+        [switch]
+        $IsOutro
+    )
+    $IntroFormat = [string]::IsNullOrWhiteSpace($IntroFormat) ? "<🔓-- {0}" : $IntroFormat
+    $OutroFormat = [string]::IsNullOrWhiteSpace($OutroFormat) ? "{0} --🔒>" : $OutroFormat
+    $format = $IsOutro.IsPresent ? $OutroFormat : $IntroFormat
+    $message = [string]::Format($format, $value)
+    Write-OutputMessage "$message"  -ForegroundColor:$ForegroundColor -BackgroundColor:$BackgroundColor -NoNewLine:$NoNewLine -NoOutput:$NoOutput
+}
+
+function Write-OutputMessage {
+    param (
+        [Parameter()]
+        [object]
+        $Value = [string]::Empty,
+
+        [parameter()]
+        [System.ConsoleColor]
+        $ForegroundColor = [System.Console]::ForegroundColor,
+
+        [parameter()]
+        [System.ConsoleColor]
+        $BackgroundColor = [System.Console]::BackgroundColor,
+
+        [parameter()]
+        [Switch]
+        $NoNewLine,
+
+        [Parameter()]
+        [switch]
+        $NoOutput
+    )
+    $actualForeground = [System.Console]::ForegroundColor
+    $actualBackground = [System.Console]::BackgroundColor
+    [System.Console]::ForegroundColor = $ForegroundColor
+    [System.Console]::BackgroundColor = $BackgroundColor
+    if (!$NoOutput.IsPresent) {
+        if ($NoNewLine.IsPresent) {
+            [System.Console]::Write($Value)
+        }
+        else {
+            [System.Console]::WriteLine($Value)
+        }
+        
+    }   
+    [System.Console]::ForegroundColor = $actualForeground
+    [System.Console]::BackgroundColor = $actualBackground
+}
+
+function Write-OutputEmptyMessage {
+    param (
+        [parameter()]
+        [Switch]
+        $NoNewLine,
+
+        [Parameter()]
+        [switch]
+        $NoOutput
+    )
+    if (!$NoOutput.IsPresent) {
+        Write-Host -NoNewline:$NoNewLine
+    }    
+}
+
 function Write-TextColor {
     Param(
         [parameter(Position = 0, ValueFromPipeline = $true)]
@@ -1997,6 +2096,8 @@ class VisualStudioEditionValidateSet : System.Management.Automation.IValidateSet
     }
 }
 
+# ███ Vcvarsall.bat
+
 function Get-VcvarsScriptPath {
     [CmdletBinding()]
     param (
@@ -2068,106 +2169,6 @@ function Set-Vcvars {
     }
     Write-Host      
 }
-
-function Write-OutputIntroOutroMessage {
-    [CmdletBinding()]
-    param (
-        [Parameter()]
-        [object]
-        $Value = [string]::Empty,
-
-        [Parameter()]
-        [string]
-        $IntroFormat = [string]::Empty,
-
-        [Parameter()]
-        [string]
-        $OutroFormat = [string]::Empty,
-
-        [parameter()]
-        [System.ConsoleColor]
-        $ForegroundColor = [System.ConsoleColor]::ForegroundColor,
-
-        [parameter()]
-        [System.ConsoleColor]
-        $BackgroundColor = [System.Console]::BackgroundColor,
-
-        [parameter()]
-        [Switch]
-        $NoNewLine,
-
-        [Parameter()]
-        [switch]
-        $NoOutput,
-
-        [Parameter()]
-
-        [switch]
-        $IsOutro
-    )
-    $IntroFormat = [string]::IsNullOrWhiteSpace($IntroFormat) ? "<🔓-- {0}" : $IntroFormat
-    $OutroFormat = [string]::IsNullOrWhiteSpace($OutroFormat) ? "{0} --🔒>" : $OutroFormat
-    $format = $IsOutro.IsPresent ? $OutroFormat : $IntroFormat
-    $message = [string]::Format($format, $value)
-    Write-OutputMessage "$message"  -ForegroundColor:$ForegroundColor -BackgroundColor:$BackgroundColor -NoNewLine:$NoNewLine -NoOutput:$NoOutput
-}
-
-function Write-OutputMessage {
-    param (
-        [Parameter()]
-        [object]
-        $Value = [string]::Empty,
-
-        [parameter()]
-        [System.ConsoleColor]
-        $ForegroundColor = [System.Console]::ForegroundColor,
-
-        [parameter()]
-        [System.ConsoleColor]
-        $BackgroundColor = [System.Console]::BackgroundColor,
-
-        [parameter()]
-        [Switch]
-        $NoNewLine,
-
-        [Parameter()]
-        [switch]
-        $NoOutput
-    )
-    $actualForeground = [System.Console]::ForegroundColor
-    $actualBackground = [System.Console]::BackgroundColor
-    [System.Console]::ForegroundColor = $ForegroundColor
-    [System.Console]::BackgroundColor = $BackgroundColor
-    if (!$NoOutput.IsPresent) {
-        if ($NoNewLine.IsPresent) {
-            [System.Console]::Write($Value)
-        }
-        else {
-            [System.Console]::WriteLine($Value)
-        }
-        
-    }   
-    [System.Console]::ForegroundColor = $actualForeground
-    [System.Console]::BackgroundColor = $actualBackground
-}
-
-function Write-OutputEmptyMessage {
-    param (
-        [parameter()]
-        [Switch]
-        $NoNewLine,
-
-        [Parameter()]
-        [switch]
-        $NoOutput
-    )
-    if (!$NoOutput.IsPresent) {
-        Write-Host -NoNewline:$NoNewLine
-    }    
-}
-
-
-# ███ Botan
 
 # ███ Emscripten
 
