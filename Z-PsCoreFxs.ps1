@@ -1847,14 +1847,9 @@ function Invoke-HttpDownload {
 
         [Parameter()]
         [switch]
-        $ForceDownload,
-        
-        [Parameter()]
-        [switch]
-        $NoOutput
+        $ForceDownload
     )
-    Write-OutputMessage -NoOutput:$NoOutput.IsPresent
-    Write-OutputMessage -Value "Downloading: $Url" -ForegroundColor Blue -NoOutput:$NoOutput.IsPresent
+    Write-OutputMessage -Value "Downloading: $Url" -ForegroundColor Blue
     if (!(Test-HttpUri -Uri "$Url")) {
         throw "Resource is offline or invalid uri `"$Url`"."
     }
@@ -1863,16 +1858,16 @@ function Invoke-HttpDownload {
     $filename = [string]::IsNullOrWhiteSpace($Name) ? "$DestinationPath/$([System.IO.Path]::GetFileName("$Url"))" : "$DestinationPath/$Name"
     $download = $ForceDownload.IsPresent -or (!(Test-Path -Path "$filename" -PathType Leaf))
     if (![string]::IsNullOrWhiteSpace($Hash) -and !$download) {
-        Write-OutputMessage -Value "Preparing download `"$filename`"." -NoOutput:$NoOutput.IsPresent
+        Write-OutputMessage -Value "Preparing download `"$filename`"."
         $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
         $download = $download -or (!$Hash.Equals($fileHash))
     }
     if ($download) {
-        Write-OutputMessage -Value "Saving `"$filename`"." -NoOutput:$NoOutput.IsPresent
+        Write-OutputMessage -Value "Saving `"$filename`"." 
         Invoke-WebRequest -Uri "$Url" -OutFile "$filename" 
     }
     else {
-        Write-OutputMessage -Value "Already downloaded `"$filename`". Skipping download." -NoOutput:$NoOutput.IsPresent
+        Write-OutputMessage -Value "Already downloaded `"$filename`". Skipping download."
     }
 
     if (![string]::IsNullOrWhiteSpace($Hash)) {
@@ -1893,39 +1888,24 @@ function Expand-TarXzArchive {
         
         [Parameter()]
         [string]
-        $DestinationPath = [string]::Empty,
-
-        [Parameter()]
-        [switch]
-        $NoOutput
+        $DestinationPath = [string]::Empty
     )
-    Write-OutputMessage -NoOutput:$NoOutput.IsPresent
-    Write-OutputMessage -Value "Expanding: $Path" -ForegroundColor Blue -NoOutput:$NoOutput.IsPresent
+    Write-OutputMessage -Value "Expanding: $Path" -ForegroundColor Blue 
     if (!($Path.ToLower().EndsWith(".tar.xz"))) {
         throw "Invalid file extension. File: `"$($Path)`"."
     }
     $tarXzFile = $Path
     $tarFile = "$($Path | Split-Path)/$([System.IO.Path]::GetFileNameWithoutExtension($Path))"
     if ($IsWindows) {
-        if ($NoOutput.IsPresent) {
-            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile" | Out-Null
-            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile" | Out-Null
-        }
-        else {
-            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile"
-            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile"
-        }
+        
+        & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$tarXzFile"
+        & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" -r "$tarFile"
         Remove-Item -Force -Path "$tarFile" -ErrorAction Ignore
     }
     if ($IsLinux -or $IsMacOS) {
-        if ($NoOutput.IsPresent) {
-            & tar -xf "$Path" -C "$DestinationPath" --overwrite | Out-Null
-        }
-        else {
-            & tar -xf "$Path" -C "$DestinationPath" --overwrite
-            Write-Host "Finished expand."
-        }
+        & tar -xf "$Path" -C "$DestinationPath" --overwrite
     }  
+    Write-Host "Finished expand."
 }
 
 function Expand-ZipArchive {
@@ -1938,35 +1918,23 @@ function Expand-ZipArchive {
         
         [Parameter()]
         [string]
-        $DestinationPath = [string]::Empty,
-
-        [Parameter()]
-        [switch]
-        $NoOutput
+        $DestinationPath = [string]::Empty
     )
-    $DestinationPath = [string]::IsNullOrWhiteSpace($DestinationPath) ? "$(Get-Location)" : $DestinationPath
-    Write-OutputMessage -NoOutput:$NoOutput.IsPresent
-    Write-OutputMessage -Value "Expanding: `"$Path`", Destination: `"$DestinationPath`"" -ForegroundColor Blue -NoOutput:$NoOutput.IsPresent 
-    if (!($Path.ToLower().EndsWith(".zip"))) {
-        throw "Invalid file extension. File: `"$($Path)`"."
-    }
-    if ($IsWindows) {
-        if ($NoOutput.IsPresent) {
-            & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path" | Out-Null
+    process {
+        $DestinationPath = [string]::IsNullOrWhiteSpace($DestinationPath) ? "$(Get-Location)" : $DestinationPath
+        Write-OutputMessage 
+        Write-OutputMessage -Value "Expanding: `"$Path`", Destination: `"$DestinationPath`"" -ForegroundColor Blue  
+        if (!($Path.ToLower().EndsWith(".zip"))) {
+            throw "Invalid file extension. File: `"$($Path)`"."
         }
-        else {
+        if ($IsWindows) {
             & "$__PSCOREFXS_7_ZIP_EXE" x -aoa -o"$DestinationPath" "$Path"
         }
-    }
-    if ($IsLinux -or $IsMacOS) {
-        if ($NoOutput.IsPresent) {
-            & unzip "$Path" -d "$DestinationPath" -o | Out-Null
-        }
-        else {
-            & unzip "$Path" -d "$DestinationPath" -o
-        }
+        if ($IsLinux -or $IsMacOS) {
+            & unzip -oq "$Path" -d "$DestinationPath" 
+        }  
         Write-Host "Finished expand."
-    }  
+    }
 }
 
 function Join-CompileCommandsJson {
@@ -2101,6 +2069,49 @@ function Set-Vcvars {
     Write-Host      
 }
 
+function Write-OutputIntroOutroMessage {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [object]
+        $Value = [string]::Empty,
+
+        [Parameter()]
+        [string]
+        $IntroFormat = [string]::Empty,
+
+        [Parameter()]
+        [string]
+        $OutroFormat = [string]::Empty,
+
+        [parameter()]
+        [System.ConsoleColor]
+        $ForegroundColor = [System.ConsoleColor]::ForegroundColor,
+
+        [parameter()]
+        [System.ConsoleColor]
+        $BackgroundColor = [System.Console]::BackgroundColor,
+
+        [parameter()]
+        [Switch]
+        $NoNewLine,
+
+        [Parameter()]
+        [switch]
+        $NoOutput,
+
+        [Parameter()]
+
+        [switch]
+        $IsOutro
+    )
+    $IntroFormat = [string]::IsNullOrWhiteSpace($IntroFormat) ? "<🔓-- {0}" : $IntroFormat
+    $OutroFormat = [string]::IsNullOrWhiteSpace($OutroFormat) ? "{0} --🔒>" : $OutroFormat
+    $format = $IsOutro.IsPresent ? $OutroFormat : $IntroFormat
+    $message = [string]::Format($format, $value)
+    Write-OutputMessage "$message"  -ForegroundColor:$ForegroundColor -BackgroundColor:$BackgroundColor -NoNewLine:$NoNewLine -NoOutput:$NoOutput
+}
+
 function Write-OutputMessage {
     param (
         [Parameter()]
@@ -2123,9 +2134,21 @@ function Write-OutputMessage {
         [switch]
         $NoOutput
     )
+    $actualForeground = [System.Console]::ForegroundColor
+    $actualBackground = [System.Console]::BackgroundColor
+    [System.Console]::ForegroundColor = $ForegroundColor
+    [System.Console]::BackgroundColor = $BackgroundColor
     if (!$NoOutput.IsPresent) {
-        Write-Host -Object $Value -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor -NoNewline:$NoNewLine
-    }    
+        if ($NoNewLine.IsPresent) {
+            [System.Console]::Write($Value)
+        }
+        else {
+            [System.Console]::WriteLine($Value)
+        }
+        
+    }   
+    [System.Console]::ForegroundColor = $actualForeground
+    [System.Console]::BackgroundColor = $actualBackground
 }
 
 function Write-OutputEmptyMessage {
@@ -2139,7 +2162,7 @@ function Write-OutputEmptyMessage {
         $NoOutput
     )
     if (!$NoOutput.IsPresent) {
-        Write-Host -NoNewline:$NoNewLine.IsPresent
+        Write-Host -NoNewline:$NoNewLine
     }    
 }
 
@@ -2147,6 +2170,75 @@ function Write-OutputEmptyMessage {
 # ███ Botan
 
 # ███ Emscripten
+
+function Set-EmscriptenSDKEnvironmentVariables {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [switch]
+        $Clean
+    )
+    Write-OutputMessage "$($Clean.IsPresent ? "Cleaning" : "Setting") Emscripten SDK environment variables" -ForegroundColor Blue 
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_SDK_DIR" -Value ($Clean.IsPresent ? [string]::Empty : "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR" )
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_ROOT_DIR" -Value ($Clean.IsPresent ? [string]::Empty : "$__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR" )
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_COMPILER" -Value ($Clean.IsPresent ? [string]::Empty : "$__PSCOREFXS_EMSCRIPTEN_SDK_COMPILER_EXE" )
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCC" -Value ($Clean.IsPresent ? [string]::Empty : "$__PSCOREFXS_EMSCRIPTEN_SDK_EMCC_EXE" )
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCXX" -Value ($Clean.IsPresent ? [string]::Empty : "$__PSCOREFXS_EMSCRIPTEN_SDK_EMCXX_EXE" )
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMRUN" -Value ($Clean.IsPresent ? [string]::Empty : "$__PSCOREFXS_EMSCRIPTEN_SDK_EMRUN_EXE" )
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMMAKE" -Value ($Clean.IsPresent ? [string]::Empty : "$__PSCOREFXS_EMSCRIPTEN_SDK_EMMAKE_EXE" )
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMAR" -Value ($Clean.IsPresent ? [string]::Empty : "$__PSCOREFXS_EMSCRIPTEN_SDK_EMAR_EXE" )
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCONFIGURE" -Value ($Clean.IsPresent ? [string]::Empty : "$__PSCOREFXS_EMSCRIPTEN_SDK_EMCONFIGURE_EXE" )
+}
+
+function Test-EmscriptenSDKDependencies {
+    [CmdletBinding()]
+    param (
+    )
+    Write-OutputMessage "Testing Emscripten - Dependency tools" -ForegroundColor Blue
+
+    Write-OutputMessage "== Python" -ForegroundColor Magenta 
+    $command = Get-Command "python"
+    Write-OutputMessage "$($command.Source)" 
+    $null = Test-ExternalCommand -Command "`"$($command.Source)`" --version"  -ThrowOnFailure -ShowExitCode
+    Write-OutputEmptyMessage 
+
+    Write-OutputMessage "== Git" -ForegroundColor Magenta 
+    $command = Get-Command "git"
+    Write-OutputMessage "$($command.Source)" 
+    $null = Test-ExternalCommand -Command "`"$($command.Source)`" --version"  -ThrowOnFailure -ShowExitCode
+    Write-OutputEmptyMessage 
+}
+
+function Install-EmscriptenSDK {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [switch]
+        $Force
+    )
+        
+    process {
+        Write-OutputMessage "Installing Emscripten SDK - Path: `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`"" -ForegroundColor Blue
+        if ($Force) {
+            Remove-EmscriptenSDK 
+        }
+        Test-EmscriptenSDKDependencies 
+        Set-EmscriptenSDKEnvironmentVariables 
+    
+        Write-OutputMessage -Value "Installing on `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`"" 
+        Install-GitRepository -Url "$__PSCOREFXS_EMSCRIPTEN_SDK_REPO_URL" -Path "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR" -Force
+        $null = Test-ExternalCommand "git -C `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`" pull" -ThrowOnFailure -ShowExitCode 
+        $null = Test-ExternalCommand "`"$__PSCOREFXS_EMSCRIPTEN_SDK_EXE`" install latest" -ThrowOnFailure -ShowExitCode 
+        $null = Test-ExternalCommand "`"$__PSCOREFXS_EMSCRIPTEN_SDK_EXE`" activate latest" -ThrowOnFailure -ShowExitCode 
+    }
+}
+
+function Remove-EmscriptenSDK {    
+    Write-OutputMessage "Removing Emscripten SDK - Path: `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`"" -ForegroundColor Blue
+    Remove-Item -Path "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR" -Force -Recurse -ErrorAction Ignore
+    Set-EmscriptenSDKEnvironmentVariables -Clean 
+    Write-Host "SDK removed."
+}
 
 # ███ Android NDK functions
 
@@ -2160,16 +2252,15 @@ function Install-AndroidNDK {
         [switch]
         $ForceExpand
     )
-    Write-OutputEmptyMessage 
-    Write-OutputMessage -Value "Installing Android NDK - Path: `"$__PSCOREFXS_ANDROID_NDK_TEMP_DIR`"" -ForegroundColor Green 
+    Write-OutputMessage "Installing Android NDK - Path: `"$__PSCOREFXS_ANDROID_NDK_TEMP_DIR`"" -ForegroundColor Blue
     $os = Select-ValueByPlatform -WindowsValue "Windows" -LinuxValue "Linux" -MacOSValue "MacOS"
     $ndkVariant = $__PSCOREFXS_ANDROID_NDK_OS_VARIANTS["$os"]
     $ndkDirExists = $(Test-Path -Path "$__PSCOREFXS_ANDROID_NDK_DIR")
-    Invoke-HttpDownload -Url "$($ndkVariant.Url)" -DestinationPath "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Hash "$($ndkVariant.Sha1)" -HashAlgorithm SHA1 -Force:$ForceDownload -NoOutput:$NoOutput
+    Invoke-HttpDownload -Url "$($ndkVariant.Url)" -DestinationPath "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Hash "$($ndkVariant.Sha1)" -HashAlgorithm SHA1 -Force:$ForceDownload
     $downloadedFilename = "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/$([System.IO.Path]::GetFileName($ndkVariant.Url))"
     if ($IsLinux -or $IsWindows) {
         if (!$ndkDirExists -or $ForceExpand.IsPresent) {
-            Expand-ZipArchive -Path "$downloadedFilename" -DestinationPath "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -NoOutput:$NoOutput
+            Expand-ZipArchive -Path "$downloadedFilename" -DestinationPath "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" 
         }
         else {
             Write-OutputMessage -Value "Skipping expand archive `"$downloadedFilename`"." 
@@ -2193,11 +2284,13 @@ function Install-AndroidNDK {
 }
 
 function Remove-AndroidNDK {
-    Write-OutputEmptyMessage 
-    Write-OutputMessage -Value "Removing Android NDK" -ForegroundColor Blue
+    Write-OutputMessage "Removing Android NDK - Path: `"$__PSCOREFXS_ANDROID_NDK_TEMP_DIR`"" -ForegroundColor Blue    
     Remove-Item -Path "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Force -Recurse -ErrorAction Ignore
     Write-OutputMessage -Value "Android NDK removed."
+    
 }
+
+# ███ Constants
 
 # █ Misc Constants
 Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreFxs"
@@ -2271,96 +2364,3 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value @{
         NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" #Update on next NDK version.
     }
 }
-
-
-function Set-EmscriptenSDKEnvironmentVariables {
-    [CmdletBinding()]
-    param (
-        [Parameter()]
-        [switch]
-        $Clean
-    )
-    if ($Clean.IsPresent) {
-        Write-OutputMessage -Value "Cleaning Emscripten SDK environment variables" -ForegroundColor Blue 
-        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_SDK_DIR" -Value "" 
-        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_ROOT_DIR" -Value ""
-        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_COMPILER" -Value "" 
-        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCC" -Value "" 
-        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCXX" -Value "" 
-        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMRUN" -Value "" 
-        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMMAKE" -Value "" 
-        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMAR" -Value "" 
-        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCONFIGURE" -Value "" 
-        return 
-    }
-    Write-OutputMessage -Value "Setting Emscripten SDK environment variables" -ForegroundColor Blue 
-    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_SDK_DIR" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR" 
-    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_ROOT_DIR" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR" 
-    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_COMPILER" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_COMPILER_EXE" 
-    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCC" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMCC_EXE" 
-    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCXX" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMCXX_EXE" 
-    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMRUN" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMRUN_EXE" 
-    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMMAKE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMMAKE_EXE" 
-    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMAR" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMAR_EXE" 
-    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCONFIGURE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMCONFIGURE_EXE" 
-}
-
-function Test-EmscriptenSDKDependencies {
-    [CmdletBinding()]
-    param (
-    )
-    Write-OutputMessage -Value "Test Emscripten - Dependency tools" -ForegroundColor Blue
-
-    Write-OutputMessage -Value "== Python" -ForegroundColor Magenta 
-    $command = Get-Command "python"
-    Write-OutputMessage -Value "$($command.Source)" 
-    $null = Test-ExternalCommand -Command "`"$($command.Source)`" --version"  -ThrowOnFailure -ShowExitCode
-    Write-OutputEmptyMessage 
-
-    Write-OutputMessage -Value "== Git" -ForegroundColor Magenta 
-    $command = Get-Command "git"
-    Write-OutputMessage -Value "$($command.Source)" 
-    $null = Test-ExternalCommand -Command "`"$($command.Source)`" --version"  -ThrowOnFailure -ShowExitCode
-    Write-OutputEmptyMessage 
-}
-function Install-EmscriptenSDK {
-    [CmdletBinding()]
-    param (
-        [Parameter()]
-        [switch]
-        $Force
-    )
-    Write-OutputEmptyMessage 
-    Write-OutputMessage -Value "Installing Emscripten SDK" -ForegroundColor Green 
-    if ($Force) {
-        Remove-EmscriptenSDK 
-    }
-    Test-EmscriptenSDKDependencies 
-    Set-EmscriptenSDKEnvironmentVariables 
-    
-    Write-OutputMessage -Value "Installing on `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`"" -ForegroundColor Blue 
-    Install-GitRepository -Url "$__PSCOREFXS_EMSCRIPTEN_SDK_REPO_URL" -Path "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR" -Force
-    $null = Test-ExternalCommand "git -C `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`" pull" -ThrowOnFailure -ShowExitCode 
-    $null = Test-ExternalCommand "`"$__PSCOREFXS_EMSCRIPTEN_SDK_EXE`" install latest" -ThrowOnFailure -ShowExitCode 
-    $null = Test-ExternalCommand "`"$__PSCOREFXS_EMSCRIPTEN_SDK_EXE`" activate latest" -ThrowOnFailure -ShowExitCode 
-}
-
-function Remove-EmscriptenSDK {
-    [CmdletBinding()]
-    param (
-
-    )
-    Write-OutputEmptyMessage 
-    Write-OutputMessage -Value "Removing Emscripten SDK" -ForegroundColor Blue 
-    Remove-Item -Path "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR" -Force -Recurse -ErrorAction Ignore
-    Set-EmscriptenSDKEnvironmentVariables -Clean 
-    Write-OutputMessage -Value "Emscripten SDK removed." 
-}
-
-#Remove-AndroidNDK -NoOutput
-#Install-AndroidNDK -NoOutput
-
-Install-EmscriptenSDK
-
-#Set-EmscriptenSDKEnvironmentVariables -NoOutput:$false
-#Remove-EmscriptenSDK
