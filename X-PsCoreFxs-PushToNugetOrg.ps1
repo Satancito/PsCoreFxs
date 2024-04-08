@@ -58,9 +58,9 @@ switch ($ApiKeyType) {
 if (![string]::IsNullOrWhiteSpace($NugetPushApiKey)) {
     [string] $symbols = $NoSymbols.IsPresent ? "--no-symbols" : [string]::Empty
     Write-Host $symbols
-    dotnet nuget push "$nupkg" --api-key "$NugetPushApiKey" --source "$NUGET_ORG_URI" $symbols
+    dotnet nuget push "$nupkg" --api-key "$NugetPushApiKey" --source "$__PSCOREFXS_NUGET_ORG_V3_URI" $symbols
     Test-LastExitCode
     return
 }
 
-throw "No ""$NUGET_ORG_URI"" api key found."
+throw "No ""$__PSCOREFXS_NUGET_ORG_V3_URI"" api key found."

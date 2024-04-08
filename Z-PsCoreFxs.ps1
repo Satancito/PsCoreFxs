@@ -40,17 +40,6 @@ function Pop-LocationStack {
     
 }
 
-function Get-InternalPreference {
-    param (
-        
-    )
-
-    return @{
-        ForceOverwriteConstans = $true
-    }
-    
-}
-
 function Get-StringCoalesce {
     param (
         [string]
@@ -91,13 +80,13 @@ function Set-GlobalConstant {
         $Name,
 
         [Parameter(Mandatory = $false, Position = 1, ValueFromPipeline = $true)]
-        [System.String]
+        [System.Object]
         $Value
+
     )
     Process {
-        $Force = (Get-InternalPreference).ForceOverwriteConstans
         if (!(Get-Variable "$Name"  -ErrorAction 'Ignore')) {
-            Set-Variable -Name "$Name" -Option Constant -Value "$Value" -Scope Global -Force:$Force
+            Set-Variable -Name "$Name" -Option Constant -Value $Value -Scope Global -Force
         }
     }
 }
@@ -110,11 +99,11 @@ function Set-GlobalVariable {
         $Name,
 
         [Parameter(Mandatory = $false, Position = 1, ValueFromPipeline = $true)]
-        [System.String]
-        $Value = ""
+        [System.Object]
+        $Value
     )
     Process {
-        Set-Variable -Name "$Name" -Value "$Value" -Scope Global
+        Set-Variable -Name "$Name" -Value $Value -Option ReadOnly -Scope Global -Force
     }
 }
 
@@ -1205,23 +1194,30 @@ function Set-LocalEnvironmentVariable {
 
         [Parameter()]
         [Switch]
-        $Append
+        $Append,
+
+        [Parameter()]
+        [Switch]
+        $NoOutput
     )
 
     function Write-MyMessage {
         param(
             [System.String]
-            $VarName
+            $VarName,
+
+            [Parameter()]
+            [Switch]
+            $NoOutput 
         )
-        WWrite-Host "Local Environment variable " -ForegroundColor DarkYellow -NoNewline
-        Write-Host "`"$VarName`"" -NoNewline -ForegroundColor Yellow
-        Write-Host "  ➡  " -ForegroundColor DarkYellow -NoNewline
-        try {
-            Write-Host "`"$((Get-Item env:$VarName).Value)`"" -ForegroundColor Yellow
-        }
-        catch {
-            Write-Host """""" -ForegroundColor Yellow
-        }
+        $envVar = Get-Item env:$VarName -ErrorAction SilentlyContinue
+        $envVar = ([string]::IsNullOrWhiteSpace($envVar)) ? [string]::Empty : $envVar.Value
+        $color = ([string]::IsNullOrWhiteSpace($envVar)) ? "DarkGray" : "Magenta"
+        
+        Write-OutputMessage "Local Environment variable " -NoNewline -ForegroundColor White -NoOutput:$NoOutput
+        Write-OutputMessage "`"$VarName`"" -NoNewline -ForegroundColor Magenta -NoOutput:$NoOutput
+        Write-OutputMessage "  ➡  " -NoNewline -ForegroundColor White -NoOutput:$NoOutput
+        Write-OutputMessage "`"$envVar`"" -ForegroundColor $Color -NoOutput:$NoOutput
     }
 
     if ($Append.IsPresent) {
@@ -1230,9 +1226,7 @@ function Set-LocalEnvironmentVariable {
         }
     }
     New-Item env:$Name -Value "$value" -Force | Out-Null
-    if ($PSBoundParameters.Verbose.IsPresent) {
-        Write-MyMessage -VarName $Name
-    }
+    Write-MyMessage -VarName $Name -NoOutput:$NoOutput
 }
 
 function Set-PersistentEnvironmentVariable {
@@ -1247,55 +1241,56 @@ function Set-PersistentEnvironmentVariable {
     
         [Parameter()]
         [Switch]
-        $Append        
+        $Append, 
+        
+        [Parameter()]
+        [Switch]
+        $NoOutput 
     )
     
     function Write-MyMessage {
         param(
             [System.String]
-            $VarName
-        )
-        Write-Host "Persistent Environment variable " -NoNewline -ForegroundColor DarkYellow
-        Write-Host "`"$VarName`"" -NoNewline -ForegroundColor Yellow
-        Write-Host "  ➡  " -NoNewline -ForegroundColor DarkYellow
-        try {
-            Write-Host "`"$((Get-Item env:$VarName).Value)`"" -ForegroundColor Yellow
-        }
-        catch {
-            Write-Host """""" -ForegroundColor Yellow
-        }
-    }
+            $VarName,
 
-    Set-LocalEnvironmentVariable -Name $Name -Value $Value -Append:$Append
+            [Parameter()]
+            [Switch]
+            $NoOutput
+        )
+        $envVar = Get-Item env:$VarName -ErrorAction SilentlyContinue
+        $envVar = ([string]::IsNullOrWhiteSpace($envVar)) ? [string]::Empty : $envVar.Value
+        $color = ([string]::IsNullOrWhiteSpace($envVar)) ? "DarkGray" : "Magenta"
+        Write-OutputMessage "Persistent Environment variable " -NoNewline -ForegroundColor White -NoOutput:$NoOutput
+        Write-OutputMessage "`"$VarName`"" -NoNewline -ForegroundColor Magenta -NoOutput:$NoOutput
+        Write-OutputMessage "  ➡  " -NoNewline -ForegroundColor White -NoOutput:$NoOutput
+        Write-OutputMessage "`"$envVar`"" -ForegroundColor $Color -NoOutput:$NoOutput
+    }    
+
+    Set-LocalEnvironmentVariable -Name $Name -Value $Value -Append:$Append -NoOutput
     if ($Append.IsPresent) {
         $value = (Get-Item "env:$Name").Value
     }
     if ($IsWindows) {
         setx "$Name" "$Value" | Out-Null
-        if ($PSBoundParameters.Verbose.IsPresent) {
-            Write-MyMessage -VarName $Name
-        }
+        Write-MyMessage -VarName $Name -NoOutput:$NoOutput
         return
     }
     if ($IsLinux -or $IsMacOS) {
-        $pattern = "\s*export\s+$name=[\w\W]*\w*\s+>\s*\/dev\/null\s+;\s*#\s*$Name\s*"
+        $pattern = "\s*export\s+$name=[\w\W]*\w*\s+>\s*\/dev\/null\s+; \s*#\s*$Name\s*"
         $files = @("~/.bashrc", "~/.zshrc", "~/.bash_profile", "~/.zprofile")
         
         $files | ForEach-Object {
             if (Test-Path -Path $_ -PathType Leaf) {
                 $content = [System.IO.File]::ReadAllText("$(Resolve-Path $_)")
                 $content = [System.Text.RegularExpressions.Regex]::Replace($content, $pattern, [System.Environment]::NewLine);
-                $content += [System.Environment]::NewLine + "export $Name=$Value > /dev/null ;  # $Name" + [System.Environment]::NewLine
+                $content += [System.Environment]::NewLine + "export $Name=$Value > /dev/null ; # $Name" + [System.Environment]::NewLine
                 [System.IO.File]::WriteAllText("$(Resolve-Path $_)", $content)
             }
             
         }
-        if ($PSBoundParameters.Verbose.IsPresent) {
-            Write-MyMessage -VarName $Name
-        }
+        Write-MyMessage -VarName $Name -NoOutput:$NoOutput
         return
     }
-    
     throw "Invalid platform."
 }
 
@@ -1396,14 +1391,18 @@ function Test-GitRepository {
     param (
         [Parameter()]
         [System.String]
-        $Path
+        $Path,
+
+        [Parameter()]
+        [switch]
+        $NoOutput
     )
     if (!(Test-Path $Path -PathType Container)) {
         return $false
     }
     try {
         Push-Location $Path
-        $result = $(Test-ExternalCommand "git rev-parse --is-inside-work-tree --quiet" -NoOutput)
+        $result = $(Test-ExternalCommand "git rev-parse --is-inside-work-tree --quiet" -NoOutput:$NoOutput)
         return $result
     }
     finally {
@@ -1444,13 +1443,17 @@ function Add-GitSafeDirectory {
         [Parameter()]
         [ValidateSet("system", "global", "local", "worktree")]
         [string]
-        $ConfigFile = "global"
+        $ConfigFile = "global",
+
+        [Parameter()]
+        [switch]
+        $NoOutput
 
     )
     if (!(Test-Path $Path -PathType Container)) {
         throw "Invalid path: $Path"
     }
-    $null = Test-ExternalCommand "git config --$ConfigFile --fixed-value --replace-all safe.directory ""$Path"" ""$Path""" -ThrowOnFailure
+    $null = Test-ExternalCommand "git config --$ConfigFile --fixed-value --replace-all safe.directory ""$Path"" ""$Path""" -ThrowOnFailure -NoOutput:$NoOutput
     
 }
 
@@ -1468,12 +1471,13 @@ function Reset-GitRepositoryHard {
         [string]
         $BranchName = "main"
     )
+        
     if (Test-GitRepository $Path) {
         try {
             Push-Location "$Path"
-            $null = Test-ExternalCommand "git fetch $RemoteName $BranchName" -ThrowOnFailure
-            $null = Test-ExternalCommand "git reset --hard $RemoteName/$BranchName" -ThrowOnFailure
-            $null = Test-ExternalCommand "git checkout $BranchName" -ThrowOnFailure
+            $null = Test-ExternalCommand "git fetch $RemoteName $BranchName" -ThrowOnFailure -NoOutput
+            $null = Test-ExternalCommand "git reset --hard $RemoteName/$BranchName" -ThrowOnFailure -NoOutput
+            $null = Test-ExternalCommand "git checkout $BranchName" -ThrowOnFailure -NoOutput
         }
         finally {
             Pop-Location 
@@ -1534,7 +1538,11 @@ function Install-GitRepository {
         [Parameter()]
         [ValidateSet("system", "global", "local", "worktree")]
         [string]
-        $ConfigFile = "global"
+        $ConfigFile = "global",
+
+        [Parameter()]
+        [switch]
+        $NoOutput
 
     )
     $isRepo = Test-GitRepository $Path
@@ -1717,17 +1725,13 @@ function Test-ExternalCommand {
             }
         }
         if ($exitCode -in $AllowedExitCodes) {
-            if (!($NoOutput.IsPresent)) {
-                Write-Host "✅ Command executed: $Command "
-            }
+            Write-OutputMessage "✅ $Command " -NoOutput:$NoOutput
             return $true
         }
         throw
     }
     catch {
-        if (!$NoOutput.IsPresent) {
-            Write-Host "❌ Command executed: $Command"
-        }
+        Write-OutputMessage "❌ Command executed: $Command" -NoOutput:$NoOutput
         if ($ThrowOnFailure) {
             throw "An error occurred while executing the command."
         }
@@ -1849,11 +1853,8 @@ function Invoke-HttpDownload {
         [switch]
         $NoOutput
     )
-    if (!$NoOutput.IsPresent) {
-        Write-Host
-        Write-InfoBlue "Downloading: $Url"
-        Write-Host
-    }
+    Write-OutputMessage -NoOutput:$NoOutput.IsPresent
+    Write-OutputMessage -Value "Downloading: $Url" -ForegroundColor Blue -NoOutput:$NoOutput.IsPresent
     if (!(Test-HttpUri -Uri "$Url")) {
         throw "Resource is offline or invalid uri `"$Url`"."
     }
@@ -1862,22 +1863,16 @@ function Invoke-HttpDownload {
     $filename = [string]::IsNullOrWhiteSpace($Name) ? "$DestinationPath/$([System.IO.Path]::GetFileName("$Url"))" : "$DestinationPath/$Name"
     $download = $ForceDownload.IsPresent -or (!(Test-Path -Path "$filename" -PathType Leaf))
     if (![string]::IsNullOrWhiteSpace($Hash) -and !$download) {
-        if (!$NoOutput.IsPresent) {
-            Write-Host "Preparing download `"$filename`"."
-        }
+        Write-OutputMessage -Value "Preparing download `"$filename`"." -NoOutput:$NoOutput.IsPresent
         $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
         $download = $download -or (!$Hash.Equals($fileHash))
     }
     if ($download) {
-        if (!$NoOutput.IsPresent) {
-            Write-Host "Saving `"$filename`"."
-        }
+        Write-OutputMessage -Value "Saving `"$filename`"." -NoOutput:$NoOutput.IsPresent
         Invoke-WebRequest -Uri "$Url" -OutFile "$filename" 
     }
     else {
-        if (!$NoOutput.IsPresent) {
-            Write-Host "Already downloaded `"$filename`". Skipping download."
-        }
+        Write-OutputMessage -Value "Already downloaded `"$filename`". Skipping download." -NoOutput:$NoOutput.IsPresent
     }
 
     if (![string]::IsNullOrWhiteSpace($Hash)) {
@@ -1904,10 +1899,8 @@ function Expand-TarXzArchive {
         [switch]
         $NoOutput
     )
-    if (!$NoOutput.IsPresent) {
-        Write-Host
-        Write-InfoBlue "Expanding: $Path"
-    }  
+    Write-OutputMessage -NoOutput:$NoOutput.IsPresent
+    Write-OutputMessage -Value "Expanding: $Path" -ForegroundColor Blue -NoOutput:$NoOutput.IsPresent
     if (!($Path.ToLower().EndsWith(".tar.xz"))) {
         throw "Invalid file extension. File: `"$($Path)`"."
     }
@@ -1926,10 +1919,10 @@ function Expand-TarXzArchive {
     }
     if ($IsLinux -or $IsMacOS) {
         if ($NoOutput.IsPresent) {
-            tar -xf "$Path" -C "$DestinationPath" --overwrite | Out-Null
+            & tar -xf "$Path" -C "$DestinationPath" --overwrite | Out-Null
         }
         else {
-            tar -xf "$Path" -C "$DestinationPath" --overwrite
+            & tar -xf "$Path" -C "$DestinationPath" --overwrite
             Write-Host "Finished expand."
         }
     }  
@@ -1951,10 +1944,9 @@ function Expand-ZipArchive {
         [switch]
         $NoOutput
     )
-    if (!$NoOutput.IsPresent) {
-        Write-Host
-        Write-InfoBlue "Expanding: $Path"
-    }  
+    $DestinationPath = [string]::IsNullOrWhiteSpace($DestinationPath) ? "$(Get-Location)" : $DestinationPath
+    Write-OutputMessage -NoOutput:$NoOutput.IsPresent
+    Write-OutputMessage -Value "Expanding: `"$Path`", Destination: `"$DestinationPath`"" -ForegroundColor Blue -NoOutput:$NoOutput.IsPresent 
     if (!($Path.ToLower().EndsWith(".zip"))) {
         throw "Invalid file extension. File: `"$($Path)`"."
     }
@@ -1972,8 +1964,8 @@ function Expand-ZipArchive {
         }
         else {
             & unzip "$Path" -d "$DestinationPath" -o
-            Write-Host "Finished expand."
         }
+        Write-Host "Finished expand."
     }  
 }
 
@@ -2109,11 +2101,113 @@ function Set-Vcvars {
     Write-Host      
 }
 
-Set-GlobalConstant -Name "__PSCOREFXS_7_ZIP_EXE" -Value "C:\Program Files\7-Zip\7z.exe"
+function Write-OutputMessage {
+    param (
+        [Parameter()]
+        [object]
+        $Value = [string]::Empty,
+
+        [parameter()]
+        [System.ConsoleColor]
+        $ForegroundColor = [System.Console]::ForegroundColor,
+
+        [parameter()]
+        [System.ConsoleColor]
+        $BackgroundColor = [System.Console]::BackgroundColor,
+
+        [parameter()]
+        [Switch]
+        $NoNewLine,
+
+        [Parameter()]
+        [switch]
+        $NoOutput
+    )
+    if (!$NoOutput.IsPresent) {
+        Write-Host -Object $Value -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor -NoNewline:$NoNewLine
+    }    
+}
+
+function Write-OutputEmptyMessage {
+    param (
+        [parameter()]
+        [Switch]
+        $NoNewLine,
+
+        [Parameter()]
+        [switch]
+        $NoOutput
+    )
+    if (!$NoOutput.IsPresent) {
+        Write-Host -NoNewline:$NoNewLine.IsPresent
+    }    
+}
+
+
+# ███ Botan
+
+# ███ Emscripten
+
+# ███ Android NDK functions
+
+function Install-AndroidNDK {
+    param (
+        [Parameter()]
+        [switch]
+        $ForceDownload,
+
+        [Parameter()]
+        [switch]
+        $ForceExpand
+    )
+    Write-OutputEmptyMessage 
+    Write-OutputMessage -Value "Installing Android NDK - Path: `"$__PSCOREFXS_ANDROID_NDK_TEMP_DIR`"" -ForegroundColor Green 
+    $os = Select-ValueByPlatform -WindowsValue "Windows" -LinuxValue "Linux" -MacOSValue "MacOS"
+    $ndkVariant = $__PSCOREFXS_ANDROID_NDK_OS_VARIANTS["$os"]
+    $ndkDirExists = $(Test-Path -Path "$__PSCOREFXS_ANDROID_NDK_DIR")
+    Invoke-HttpDownload -Url "$($ndkVariant.Url)" -DestinationPath "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Hash "$($ndkVariant.Sha1)" -HashAlgorithm SHA1 -Force:$ForceDownload -NoOutput:$NoOutput
+    $downloadedFilename = "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/$([System.IO.Path]::GetFileName($ndkVariant.Url))"
+    if ($IsLinux -or $IsWindows) {
+        if (!$ndkDirExists -or $ForceExpand.IsPresent) {
+            Expand-ZipArchive -Path "$downloadedFilename" -DestinationPath "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -NoOutput:$NoOutput
+        }
+        else {
+            Write-OutputMessage -Value "Skipping expand archive `"$downloadedFilename`"." 
+        }
+    }
+    if ($IsMacOS) {
+        if (!$ndkDirExists -or $ForceExpand.IsPresent) {
+            $mountPoint = "/Volumes/android-ndk-$($__PSCOREFXS_ANDROID_NDK_VERSION)"
+            Write-OutputMessage "Mounting: `"$downloadedFilename`" in `"$mountPoint`", " -NoNewLine
+            Write-PrettyKeyValue "NDK Destination: `"$__PSCOREFXS_ANDROID_NDK_DIR`""
+            & hdiutil mount "$downloadedFilename" -mountpoint "$mountPoint"
+            New-Item -Path "$__PSCOREFXS_ANDROID_NDK_DIR" -ItemType Directory -Force | Out-Null
+            & sh -c "cp -R -f -u '$mountPoint/$($ndkVariant.NdkInternalMountedDir)/' '$__PSCOREFXS_ANDROID_NDK_DIR'"
+            hdiutil detach "$mountPoint"
+        }
+        else {
+            Write-OutputMessage -Value "Skipping expand archive `"$downloadedFilename`"."
+        }
+    }
+    Get-Item -Path "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/*" -Exclude @("$([System.IO.Path]::GetFileName($downloadedFilename))", "$($__PSCOREFXS_ANDROID_NDK_DIR | Split-Path -Leaf)") | Remove-Item -Force -Recurse -ErrorAction Ignore
+}
+
+function Remove-AndroidNDK {
+    Write-OutputEmptyMessage 
+    Write-OutputMessage -Value "Removing Android NDK" -ForegroundColor Blue
+    Remove-Item -Path "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Force -Recurse -ErrorAction Ignore
+    Write-OutputMessage -Value "Android NDK removed."
+}
+
+# █ Misc Constants
+Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreFxs"
+Set-GlobalConstant -Name "__PSCOREFXS_REPO_URL" -Value "https://github.com/Satancito/PsCoreFxs.git" 
+
+# █ PsCoreFxs constants
+Set-GlobalConstant -Name "__PSCOREFXS_7_ZIP_EXE" -Value "C:/Program Files/7-Zip/7z.exe"
 Set-GlobalConstant -Name "__PSCOREFXS_CPP_LIBS_DIR" -Value "$(Get-UserHome)/.CppLibs"
 
-Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreFxs"
-
+# █ Vcvarsall.bat constants
 Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_X86" -Value "x86"
 Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_X64" -Value "x64"
 Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_ARM" -Value "x64_arm"
@@ -2121,18 +2215,152 @@ Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_ARM64" -Value "x64_arm64"
 
 Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_PLATFORM_TYPE_UWP" -Value "uwp"
 
+# █ Visual Studio constants
 Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_VERSION_2022" -Value "2022"
 
 Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_EDITION_COMMUNITY" -Value "Community"
 Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_EDITION_PROFESSIONAL" -Value "Professional"
 Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_EDITION_ENTERPRISE" -Value "Enterprise"
 
-
+# █ DbProviders constans     TODO: Rename
 Set-GlobalConstant -Name "SQLSERVER_PROVIDER" -Value "SqlServer"
 Set-GlobalConstant -Name "POSTGRESQL_PROVIDER" -Value "PostgreSql"
 Set-GlobalConstant -Name "MYSQL_PROVIDER" -Value "MySql"
 Set-GlobalConstant -Name "ORACLE_PROVIDER" -Value "Oracle"
 Set-GlobalConstant -Name "ALL_PROVIDER" -Value "All"
 
-Set-GlobalConstant -Name "__NUGET_ORG_V3_URI" -Value "https://api.nuget.org/v3/index.json"
-Set-GlobalConstant -Name "__PSCOREFXS_REPO_URL" -Value "https://github.com/Satancito/PsCoreFxs.git" 
+# █ Nuget constants
+Set-GlobalConstant -Name "__PSCOREFXS_NUGET_ORG_V3_URI" -Value "https://api.nuget.org/v3/index.json"
+
+
+# █ Emscripten constants
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_REPO_URL" -Value "https://github.com/emscripten-core/emsdk.git"
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_DIR" -Value "$(Get-UserHome)/.emsdk" 
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EXE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR/$(Select-ValueByPlatform -WindowsValue "emsdk.bat" -LinuxValue "emsdk" -MacOSValue "emsdk")" 
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR/upstream/emscripten" 
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_COMPILER_EXE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR/$(Select-ValueByPlatform -WindowsValue "em++.bat" -LinuxValue "em++" -MacOSValue "em++")" 
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EMCC_EXE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR/$(Select-ValueByPlatform -WindowsValue "emcc.bat" -LinuxValue "emcc" -MacOSValue "emcc")" 
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EMCXX_EXE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR/$(Select-ValueByPlatform -WindowsValue "em++.bat" -LinuxValue "em++" -MacOSValue "em++")" 
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EMRUN_EXE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR/$(Select-ValueByPlatform -WindowsValue "emrun.bat" -LinuxValue "emrun" -MacOSValue "emrun")" 
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EMMAKE_EXE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR/$(Select-ValueByPlatform -WindowsValue "emmake.bat" -LinuxValue "emmake" -MacOSValue "emmake")" 
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EMAR_EXE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR/$(Select-ValueByPlatform -WindowsValue "emar.bat" -LinuxValue "emar" -MacOSValue "emar")" 
+Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EMCONFIGURE_EXE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR/$(Select-ValueByPlatform -WindowsValue "emconfigure.bat" -LinuxValue "emconfigure" -MacOSValue "emconfigure")" 
+
+# █ Android NDK constants
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Value "$(Get-UserHome)/.android-ndk" 
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_VERSION" -Value "r26c" #Update on next NDK version. 
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION" #Update on next NDK version.
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value @{
+    Windows = @{ 
+        Url          = "https://dl.google.com/android/repository/android-ndk-r26c-windows.zip" #Update on next NDK version.
+        Sha1         = "f8c8aa6135241954461b2e3629cada4722e13ee7".ToUpper() #Update on next NDK version.
+        HostTag      = "windows-x86_64"
+        ToolchainDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/windows-x86_64" #Update on next NDK version.
+    }
+    Linux   = @{ 
+        Url          = "https://dl.google.com/android/repository/android-ndk-r26c-linux.zip" #Update on next NDK version.
+        Sha1         = "7faebe2ebd3590518f326c82992603170f07c96e".ToUpper() #Update on next NDK version.
+        HostTag      = "linux-x86_64"
+        ToolchainDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" #Update on next NDK version.
+    }
+    MacOS   = @{ 
+        Url                   = "https://dl.google.com/android/repository/android-ndk-r26c-darwin.dmg" #Update on next NDK version.
+        Sha1                  = "9d86710c309c500aa0a918fa9902d9d72cca0889".ToUpper() #Update on next NDK version.
+        HostTag               = "darwin-x86_64"
+        ToolchainDir          = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/darwin-x86_64" #Update on next NDK version.
+        NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" #Update on next NDK version.
+    }
+}
+
+
+function Set-EmscriptenSDKEnvironmentVariables {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [switch]
+        $Clean
+    )
+    if ($Clean.IsPresent) {
+        Write-OutputMessage -Value "Cleaning Emscripten SDK environment variables" -ForegroundColor Blue 
+        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_SDK_DIR" -Value "" 
+        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_ROOT_DIR" -Value ""
+        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_COMPILER" -Value "" 
+        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCC" -Value "" 
+        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCXX" -Value "" 
+        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMRUN" -Value "" 
+        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMMAKE" -Value "" 
+        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMAR" -Value "" 
+        Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCONFIGURE" -Value "" 
+        return 
+    }
+    Write-OutputMessage -Value "Setting Emscripten SDK environment variables" -ForegroundColor Blue 
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_SDK_DIR" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR" 
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_ROOT_DIR" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_ROOT_DIR" 
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_COMPILER" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_COMPILER_EXE" 
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCC" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMCC_EXE" 
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCXX" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMCXX_EXE" 
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMRUN" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMRUN_EXE" 
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMMAKE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMMAKE_EXE" 
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMAR" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMAR_EXE" 
+    Set-PersistentEnvironmentVariable -Name "EMSCRIPTEN_EMCONFIGURE" -Value "$__PSCOREFXS_EMSCRIPTEN_SDK_EMCONFIGURE_EXE" 
+}
+
+function Test-EmscriptenSDKDependencies {
+    [CmdletBinding()]
+    param (
+    )
+    Write-OutputMessage -Value "Test Emscripten - Dependency tools" -ForegroundColor Blue
+
+    Write-OutputMessage -Value "== Python" -ForegroundColor Magenta 
+    $command = Get-Command "python"
+    Write-OutputMessage -Value "$($command.Source)" 
+    $null = Test-ExternalCommand -Command "`"$($command.Source)`" --version"  -ThrowOnFailure -ShowExitCode
+    Write-OutputEmptyMessage 
+
+    Write-OutputMessage -Value "== Git" -ForegroundColor Magenta 
+    $command = Get-Command "git"
+    Write-OutputMessage -Value "$($command.Source)" 
+    $null = Test-ExternalCommand -Command "`"$($command.Source)`" --version"  -ThrowOnFailure -ShowExitCode
+    Write-OutputEmptyMessage 
+}
+function Install-EmscriptenSDK {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [switch]
+        $Force
+    )
+    Write-OutputEmptyMessage 
+    Write-OutputMessage -Value "Installing Emscripten SDK" -ForegroundColor Green 
+    if ($Force) {
+        Remove-EmscriptenSDK 
+    }
+    Test-EmscriptenSDKDependencies 
+    Set-EmscriptenSDKEnvironmentVariables 
+    
+    Write-OutputMessage -Value "Installing on `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`"" -ForegroundColor Blue 
+    Install-GitRepository -Url "$__PSCOREFXS_EMSCRIPTEN_SDK_REPO_URL" -Path "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR" -Force
+    $null = Test-ExternalCommand "git -C `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`" pull" -ThrowOnFailure -ShowExitCode 
+    $null = Test-ExternalCommand "`"$__PSCOREFXS_EMSCRIPTEN_SDK_EXE`" install latest" -ThrowOnFailure -ShowExitCode 
+    $null = Test-ExternalCommand "`"$__PSCOREFXS_EMSCRIPTEN_SDK_EXE`" activate latest" -ThrowOnFailure -ShowExitCode 
+}
+
+function Remove-EmscriptenSDK {
+    [CmdletBinding()]
+    param (
+
+    )
+    Write-OutputEmptyMessage 
+    Write-OutputMessage -Value "Removing Emscripten SDK" -ForegroundColor Blue 
+    Remove-Item -Path "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR" -Force -Recurse -ErrorAction Ignore
+    Set-EmscriptenSDKEnvironmentVariables -Clean 
+    Write-OutputMessage -Value "Emscripten SDK removed." 
+}
+
+#Remove-AndroidNDK -NoOutput
+#Install-AndroidNDK -NoOutput
+
+Install-EmscriptenSDK
+
+#Set-EmscriptenSDKEnvironmentVariables -NoOutput:$false
+#Remove-EmscriptenSDK
