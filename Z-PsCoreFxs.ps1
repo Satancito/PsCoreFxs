@@ -1601,6 +1601,7 @@ function Update-GitSubmodules {
     try {
         Push-Location "$Path"
         $null = Test-ExternalCommand -Command "git submodule init" -ThrowOnFailure
+        $null = Test-ExternalCommand -Command "git submodule update --init --recursive $($Force.IsPresent ? "--force" : [string]::Empty)" -ThrowOnFailure
         $null = Test-ExternalCommand -Command "git submodule update --remote --recursive $($Force.IsPresent ? "--force" : [string]::Empty)" -ThrowOnFailure
     }
     catch {
