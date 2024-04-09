@@ -174,21 +174,18 @@ function Write-OutputMessage {
         [switch]
         $NoOutput
     )
+    if ($NoOutput.IsPresent) {
+        Write-OutputEmptyMessage -NoNewLine:$NoNewLine
+        return
+    } 
     $actualForeground = [System.Console]::ForegroundColor
     $actualBackground = [System.Console]::BackgroundColor
     [System.Console]::ForegroundColor = $ForegroundColor
     [System.Console]::BackgroundColor = $BackgroundColor
-    if (!$NoOutput.IsPresent) {
-        if ($NoNewLine.IsPresent) {
-            [System.Console]::Write($Value)
-        }
-        else {
-            [System.Console]::WriteLine($Value)
-        }
-        
-    }   
+    Write-Host $Value -NoNewline:$NoNewLine
     [System.Console]::ForegroundColor = $actualForeground
-    [System.Console]::BackgroundColor = $actualBackground
+    [System.Console]::BackgroundColor = $actualBackground 
+     
 }
 
 function Write-OutputEmptyMessage {
@@ -1805,13 +1802,13 @@ function Test-ExternalCommand {
         $ShowExitCode,
 
         [int[]]
-        $AllowedExitCodes = @(0)
+        $AllowedExitCodes = @(0),
 
+        [switch]
+        $NoAssertion
     )
     try {
-        if (!$NoOutput.IsPresent) {
-            Write-Host "⚡ Running Command: $Command"
-        }
+            Write-OutputMessage "⚡ Running Command: $Command" -NoOutput:$NoOutput
         if ($NoOutput.IsPresent) {
             Invoke-Expression -Command "& $Command" | Out-Null
         }
@@ -1819,19 +1816,21 @@ function Test-ExternalCommand {
             Invoke-Expression -Command "& $Command" | Out-Host
         }
         $exitCode = $LASTEXITCODE
-        if (!($NoOutput.IsPresent)) {
-            if ($ShowExitCode.IsPresent) {
-                Write-Host "ExitCode: $exitCode"
-            }
+        if ($ShowExitCode.IsPresent) {
+            Write-OutputMessage "ExitCode: $exitCode" -NoOutput:$NoOutput
         }
         if ($exitCode -in $AllowedExitCodes) {
-            Write-OutputMessage "✅ $Command " -NoOutput:$NoOutput
+            if (!$NoAssertion.IsPresent) {
+                Write-OutputMessage "✅ [$Command]" -NoOutput:$NoOutput -ForegroundColor Green
+            }
             return $true
         }
         throw
     }
     catch {
-        Write-OutputMessage "❌ Command executed: $Command" -NoOutput:$NoOutput
+        if (!$NoAssertion.IsPresent) {
+            Write-OutputMessage "❌ [$Command]" -NoOutput:$NoOutput -ForegroundColor Red
+        }
         if ($ThrowOnFailure) {
             throw "An error occurred while executing the command."
         }
@@ -2292,15 +2291,98 @@ function Remove-AndroidNDK {
     
 }
 
+# █ Assert executables functions
+
+function Assert-Executable {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string]
+        $ExeName,
+
+        [Parameter()]
+        [string[]]
+        $Parameters = @()
+    )
+
+    Write-OutputMessage "Testing executable: [$ExeName]" -ForegroundColor Magenta 
+    Write-OutputEmptyMessage
+    $command = Get-Command "$ExeName"
+    $Parameters = $Parameters | ForEach-Object {
+        $parameter = $_
+        if ($parameter.Contains("{0}") -or $parameter.Contains("{1}")) {
+            $parameter = [string]::Format($parameter, $command.Name, $command.Source)
+        }
+        $parameter
+    }
+    $null = Test-ExternalCommand -Command "`"$($command.Source)`" $($Parameters -join " ")" -NoAssertion
+    Write-OutputEmptyMessage
+}
+
+function Assert-WslExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_WSL_EXE" -Parameters @("--version")
+}
+
+function Assert-7ZipExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_7_ZIP_EXE" -Parameters @("h", "`"{1}`"")
+}
+
+function Assert-VsCodeExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_VSCODE_EXE" -Parameters @("--version")
+}
+
+function Assert-NinjaBuildExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_NINJA_EXE" -Parameters @("--version")
+}
+
+function Assert-PythonExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_PYTHON_EXE" -Parameters @("--version")
+}
+
+function Assert-NodeExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_NODE_EXE" -Parameters @("--version")
+}
+
+function Assert-DenoExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_DENO_EXE" -Parameters @("--version")
+}
+
+function Assert-JavaExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_JAVA_EXE" -Parameters @("--version")
+}
+
+function Assert-MakeExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_MAKE_EXE" -Parameters @("--version")
+}
+
+function Assert-GitExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_GIT_EXE" -Parameters @("--version")
+}
+
+function Assert-TarExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_TAR_EXE" -Parameters @("--version")
+}
+
 # ███ Constants
 
 # █ Misc Constants
 Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreFxs"
 Set-GlobalConstant -Name "__PSCOREFXS_REPO_URL" -Value "https://github.com/Satancito/PsCoreFxs.git" 
-
-# █ PsCoreFxs constants
-Set-GlobalConstant -Name "__PSCOREFXS_7_ZIP_EXE" -Value "C:/Program Files/7-Zip/7z.exe"
 Set-GlobalConstant -Name "__PSCOREFXS_CPP_LIBS_DIR" -Value "$(Get-UserHome)/.CppLibs"
+
+# █ Executables
+Set-GlobalConstant -Name "__PSCOREFXS_7_ZIP_EXE" -Value "7z.exe"
+Set-GlobalConstant -Name "__PSCOREFXS_WSL_EXE" -Value "wsl.exe"
+Set-GlobalConstant -Name "__PSCOREFXS_VSCODE_EXE" -Value $(Select-ValueByPlatform -WindowsValue "code.com" -LinuxValue "code" -MacOSValue "code")
+Set-GlobalConstant -Name "__PSCOREFXS_NINJA_EXE" -Value $(Select-ValueByPlatform -WindowsValue "ninja.exe" -LinuxValue "ninja" -MacOSValue "ninja")
+Set-GlobalConstant -Name "__PSCOREFXS_PYTHON_EXE" -Value $(Select-ValueByPlatform -WindowsValue "python.exe" -LinuxValue "python" -MacOSValue "python")
+Set-GlobalConstant -Name "__PSCOREFXS_NODE_EXE" -Value $(Select-ValueByPlatform -WindowsValue "node.exe" -LinuxValue "node" -MacOSValue "node")
+Set-GlobalConstant -Name "__PSCOREFXS_DENO_EXE" -Value $(Select-ValueByPlatform -WindowsValue "deno.exe" -LinuxValue "deno" -MacOSValue "deno")
+Set-GlobalConstant -Name "__PSCOREFXS_JAVA_EXE" -Value $(Select-ValueByPlatform -WindowsValue "java.exe" -LinuxValue "java" -MacOSValue "java")
+Set-GlobalConstant -Name "__PSCOREFXS_MAKE_EXE" -Value $(Select-ValueByPlatform -WindowsValue "make.exe" -LinuxValue "make" -MacOSValue "make")
+Set-GlobalConstant -Name "__PSCOREFXS_GIT_EXE" -Value $(Select-ValueByPlatform -WindowsValue "git.exe" -LinuxValue "git" -MacOSValue "git")
+Set-GlobalConstant -Name "__PSCOREFXS_TAR_EXE" -Value $(Select-ValueByPlatform -WindowsValue "tar.exe" -LinuxValue "tar" -MacOSValue "tar")
+
 
 # █ Vcvarsall.bat constants
 Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_X86" -Value "x86"
@@ -2326,7 +2408,6 @@ Set-GlobalConstant -Name "ALL_PROVIDER" -Value "All"
 
 # █ Nuget constants
 Set-GlobalConstant -Name "__PSCOREFXS_NUGET_ORG_V3_URI" -Value "https://api.nuget.org/v3/index.json"
-
 
 # █ Emscripten constants
 Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_REPO_URL" -Value "https://github.com/emscripten-core/emsdk.git"
