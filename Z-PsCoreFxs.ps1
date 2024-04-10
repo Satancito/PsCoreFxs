@@ -2084,6 +2084,8 @@ function Get-OsName {
 }
 
 
+# ███ Vcvarsall.bat
+
 class VisualStudioVersionValidateSet : System.Management.Automation.IValidateSetValuesGenerator {
     [String[]] GetValidValues() {
         return @($Global:__PSCOREFXS_VISUAL_STUDIO_VERSION_2022)
@@ -2095,8 +2097,6 @@ class VisualStudioEditionValidateSet : System.Management.Automation.IValidateSet
         return @($Global:__PSCOREFXS_VISUAL_STUDIO_EDITION_COMMUNITY, $Global:__PSCOREFXS_VISUAL_STUDIO_EDITION_PROFESSIONAL, $Global:__PSCOREFXS_VISUAL_STUDIO_EDITION_ENTERPRISE)
     }
 }
-
-# ███ Vcvarsall.bat
 
 function Get-VcvarsScriptPath {
     [CmdletBinding()]
@@ -2196,18 +2196,8 @@ function Test-EmscriptenSDKDependencies {
     param (
     )
     Write-OutputMessage "Testing Emscripten - Dependency tools" -ForegroundColor Blue
-
-    Write-OutputMessage "== Python" -ForegroundColor Magenta 
-    $command = Get-Command "python"
-    Write-OutputMessage "$($command.Source)" 
-    $null = Test-ExternalCommand -Command "`"$($command.Source)`" --version"  -ThrowOnFailure -ShowExitCode
-    Write-OutputEmptyMessage 
-
-    Write-OutputMessage "== Git" -ForegroundColor Magenta 
-    $command = Get-Command "git"
-    Write-OutputMessage "$($command.Source)" 
-    $null = Test-ExternalCommand -Command "`"$($command.Source)`" --version"  -ThrowOnFailure -ShowExitCode
-    Write-OutputEmptyMessage 
+    Assert-PythonExecutable  
+    Assert-GitExecutable
 }
 
 function Install-EmscriptenSDK {
