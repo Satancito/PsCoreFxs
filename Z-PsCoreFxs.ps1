@@ -2353,6 +2353,10 @@ function Assert-TarExecutable {
     Assert-Executable -ExeName "$__PSCOREFXS_TAR_EXE" -Parameters @("--version")
 }
 
+function Assert-UnzipExecutable {
+    Assert-Executable -ExeName "$__PSCOREFXS_TAR_EXE" -Parameters @("--version")
+}
+
 # ███ Constants
 
 # █ Misc Constants
@@ -2372,6 +2376,7 @@ Set-GlobalConstant -Name "__PSCOREFXS_JAVA_EXE" -Value $(Select-ValueByPlatform 
 Set-GlobalConstant -Name "__PSCOREFXS_MAKE_EXE" -Value $(Select-ValueByPlatform -WindowsValue "make.exe" -LinuxValue "make" -MacOSValue "make")
 Set-GlobalConstant -Name "__PSCOREFXS_GIT_EXE" -Value $(Select-ValueByPlatform -WindowsValue "git.exe" -LinuxValue "git" -MacOSValue "git")
 Set-GlobalConstant -Name "__PSCOREFXS_TAR_EXE" -Value $(Select-ValueByPlatform -WindowsValue "tar.exe" -LinuxValue "tar" -MacOSValue "tar")
+Set-GlobalConstant -Name "__PSCOREFXS_UNZIP_EXE" -Value "unzip"
 
 
 # █ Vcvarsall.bat constants
