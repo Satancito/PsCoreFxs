@@ -2357,6 +2357,12 @@ function Assert-UnzipExecutable {
     Assert-Executable -ExeName "$__PSCOREFXS_TAR_EXE" -Parameters @("--version")
 }
 
+# █ Validation Sets
+class BuildConfigurationValidateSet : System.Management.Automation.IValidateSetValuesGenerator {
+    [String[]] GetValidValues() {
+        return @("Debug", "Release")
+    }
+}
 # ███ Constants
 
 # █ Misc Constants
