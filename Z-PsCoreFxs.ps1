@@ -2370,6 +2370,7 @@ Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreF
 Set-GlobalConstant -Name "__PSCOREFXS_REPO_URL" -Value "https://github.com/Satancito/PsCoreFxs.git" 
 Set-GlobalConstant -Name "__PSCOREFXS_CPP_LIBS_DIR" -Value "$(Get-UserHome)/.CppLibs"
 Set-GlobalConstant -Name "__PSCOREFXS_CLANGD_COMPILATION_DATABASE_JSON" -Value "compile_commands.json"
+Set-GlobalConstant -Name "__PSCOREFXS_CLANGD_COMPILATION_DATABASE_JSON_WITHOUT_EXTENSION" -Value "compile_commands"
 
 # █ Executables
 Set-GlobalConstant -Name "__PSCOREFXS_7_ZIP_EXE" -Value "7z.exe"
