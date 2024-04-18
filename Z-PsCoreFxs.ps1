@@ -1946,7 +1946,11 @@ function Invoke-HttpDownload {
 
         [Parameter()]
         [switch]
-        $ForceDownload
+        $ForceDownload,
+
+        [Parameter()]
+        [switch]
+        $ReturnFilename
     )
     Write-OutputMessage -Value "Downloading: $Url" -ForegroundColor Blue
     if (!(Test-HttpUri -Uri "$Url")) {
@@ -1974,6 +1978,10 @@ function Invoke-HttpDownload {
         if (!$Hash.Equals($fileHash)) {
             throw "Verification error. Hashes are different: $Hash <> $fileHash; file: `"$filename`"."
         }
+    }
+    if($ReturnFilename.IsPresent)
+    {
+        return $filename
     }
 }
 
