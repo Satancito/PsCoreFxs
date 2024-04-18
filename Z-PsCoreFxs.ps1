@@ -1808,7 +1808,7 @@ function Test-ExternalCommand {
         $NoAssertion
     )
     try {
-            Write-OutputMessage "⚡ Running Command: $Command" -NoOutput:$NoOutput
+        Write-OutputMessage "⚡ Running Command: $Command" -NoOutput:$NoOutput
         if ($NoOutput.IsPresent) {
             Invoke-Expression -Command "& $Command" | Out-Null
         }
@@ -2368,6 +2368,7 @@ class BuildConfigurationValidateSet : System.Management.Automation.IValidateSetV
 # █ Misc Constants
 Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreFxs"
 Set-GlobalConstant -Name "__PSCOREFXS_REPO_URL" -Value "https://github.com/Satancito/PsCoreFxs.git" 
+Set-GlobalConstant -Name "__PSCOREFXS_REPO_NAME" -Value $([System.IO.Path]::GetFileNameWithoutExtension("https://github.com/Satancito/PsCoreFxs.git") )
 Set-GlobalConstant -Name "__PSCOREFXS_CPP_LIBS_DIR" -Value "$(Get-UserHome)/.CppLibs"
 Set-GlobalConstant -Name "__PSCOREFXS_CLANGD_COMPILATION_DATABASE_JSON" -Value "compile_commands.json"
 Set-GlobalConstant -Name "__PSCOREFXS_CLANGD_COMPILATION_DATABASE_JSON_WITHOUT_EXTENSION" -Value "compile_commands"
