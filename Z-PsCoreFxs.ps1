@@ -2443,5 +2443,3 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value @{
         NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" #Update on next NDK version.
     }
 }
-
-Set-EmscriptenSDKEnvironmentVariables
