@@ -175,32 +175,16 @@ function Write-OutputMessage {
         $NoOutput
     )
     if ($NoOutput.IsPresent) {
-        Write-OutputEmptyMessage -NoNewLine:$NoNewLine
         return
     } 
     $actualForeground = [System.Console]::ForegroundColor
     $actualBackground = [System.Console]::BackgroundColor
     [System.Console]::ForegroundColor = $ForegroundColor
     [System.Console]::BackgroundColor = $BackgroundColor
-    Write-Host $Value -NoNewline:$NoNewLine
+    Write-Host "$Value" -NoNewline:$NoNewLine
     [System.Console]::ForegroundColor = $actualForeground
-    [System.Console]::BackgroundColor = $actualBackground 
+    [System.Console]::BackgroundColor = $actualBackground
      
-}
-
-function Write-OutputEmptyMessage {
-    param (
-        [parameter()]
-        [Switch]
-        $NoNewLine,
-
-        [Parameter()]
-        [switch]
-        $NoOutput
-    )
-    if (!$NoOutput.IsPresent) {
-        Write-Host -NoNewline:$NoNewLine
-    }    
 }
 
 function Write-TextColor {
@@ -1322,7 +1306,7 @@ function Set-LocalEnvironmentVariable {
         }
     }
     New-Item env:$Name -Value "$value" -Force | Out-Null
-    Write-MyMessage -VarName $Name -NoOutput:$NoOutput
+    Write-MyMessage -VarName "$Name" -NoOutput:$NoOutput
 }
 
 function Set-PersistentEnvironmentVariable {
@@ -2304,7 +2288,7 @@ function Assert-Executable {
     )
 
     Write-OutputMessage "Testing executable: [$ExeName]" -ForegroundColor Magenta 
-    Write-OutputEmptyMessage
+    Write-Host
     $command = Get-Command "$ExeName"
     $Parameters = $Parameters | ForEach-Object {
         $parameter = $_
@@ -2314,7 +2298,7 @@ function Assert-Executable {
         $parameter
     }
     $null = Test-ExternalCommand -Command "`"$($command.Source)`" $($Parameters -join " ")" -NoAssertion
-    Write-OutputEmptyMessage
+    Write-Host
 }
 
 function Assert-WslExecutable {
@@ -2459,3 +2443,5 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value @{
         NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" #Update on next NDK version.
     }
 }
+
+Set-EmscriptenSDKEnvironmentVariables
