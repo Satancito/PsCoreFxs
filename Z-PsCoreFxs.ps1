@@ -2147,7 +2147,7 @@ function Set-Vcvars {
     & cmd /c """$vcvars"" $Parameters  && SET" | . { process {
             $result = [System.Text.RegularExpressions.Regex]::Matches($_, $pattern)
             if ($result.Success) {
-                Set-LocalEnvironmentVariable "$($result.Groups[1].Value)" "$($result.Groups[2].Value)"
+                Set-LocalEnvironmentVariable "$($result.Groups[1].Value)" "$($result.Groups[2].Value)" -NoOutput
                 if ($ShowValues.IsPresent) {
                     Write-Host "$($result.Groups[1].Value)" -NoNewline -ForegroundColor Green
                     Write-Host "=" -NoNewline -ForegroundColor Yellow
