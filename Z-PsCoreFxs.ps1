@@ -1482,7 +1482,7 @@ function Test-GitRepository {
     }
     try {
         Push-Location $Path
-        $result = $(Test-ExternalCommand "git rev-parse --is-inside-work-tree --quiet" -NoOutput:$NoOutput)
+        $result = $(Test-ExternalCommand "git rev-parse --is-inside-work-tree --quiet" -NoOutput:$NoOutput -NoAssertion)
         return $result
     }
     finally {
@@ -1523,18 +1523,13 @@ function Add-GitSafeDirectory {
         [Parameter()]
         [ValidateSet("system", "global", "local", "worktree")]
         [string]
-        $ConfigFile = "global",
-
-        [Parameter()]
-        [switch]
-        $NoOutput
+        $ConfigFile = "global"
 
     )
     if (!(Test-Path $Path -PathType Container)) {
         throw "Invalid path: $Path"
     }
-    $null = Test-ExternalCommand "git config --$ConfigFile --fixed-value --replace-all safe.directory ""$Path"" ""$Path""" -ThrowOnFailure -NoOutput:$NoOutput
-    
+    $null = Test-ExternalCommand "git config --$ConfigFile --fixed-value --replace-all safe.directory ""$Path"" ""$Path""" -ThrowOnFailure -NoAssertion
 }
 
 function Reset-GitRepositoryHard {
@@ -1555,9 +1550,9 @@ function Reset-GitRepositoryHard {
     if (Test-GitRepository $Path) {
         try {
             Push-Location "$Path"
-            $null = Test-ExternalCommand "git fetch $RemoteName $BranchName" -ThrowOnFailure -NoOutput
-            $null = Test-ExternalCommand "git reset --hard $RemoteName/$BranchName" -ThrowOnFailure -NoOutput
-            $null = Test-ExternalCommand "git checkout $BranchName" -ThrowOnFailure -NoOutput
+            $null = Test-ExternalCommand "git fetch $RemoteName $BranchName" -ThrowOnFailure -NoAssertion
+            $null = Test-ExternalCommand "git reset --hard $RemoteName/$BranchName" -ThrowOnFailure -NoAssertion
+            $null = Test-ExternalCommand "git checkout $BranchName" -ThrowOnFailure -NoAssertion
         }
         finally {
             Pop-Location 
@@ -1619,11 +1614,7 @@ function Install-GitRepository {
         [Parameter()]
         [ValidateSet("system", "global", "local", "worktree")]
         [string]
-        $ConfigFile = "global",
-
-        [Parameter()]
-        [switch]
-        $NoOutput
+        $ConfigFile = "global"
 
     )
     $isRepo = Test-GitRepository $Path
@@ -1648,7 +1639,7 @@ function Install-GitRepository {
     else {
         Remove-Item -Path "$Path" -Force -Recurse -ErrorAction Ignore
         New-Item -Path "$Path" -Force -ItemType Directory | Out-Null
-        $null = Test-ExternalCommand "git clone ""$Url"" ""$Path""" -ThrowOnFailure
+        $null = Test-ExternalCommand "git clone ""$Url"" ""$Path""" -ThrowOnFailure -NoAssertion
         Add-GitSafeDirectory -ConfigFile $ConfigFile -Path $Path
     }
 }
