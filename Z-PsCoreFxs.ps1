@@ -2201,9 +2201,9 @@ function Install-EmscriptenSDK {
     
         Write-OutputMessage -Value "Installing on `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`"" 
         Install-GitRepository -Url "$__PSCOREFXS_EMSCRIPTEN_SDK_REPO_URL" -Path "$__PSCOREFXS_EMSCRIPTEN_SDK_DIR" -Force
-        $null = Test-ExternalCommand "git -C `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`" pull" -ThrowOnFailure -ShowExitCode 
-        $null = Test-ExternalCommand "`"$__PSCOREFXS_EMSCRIPTEN_SDK_EXE`" install latest" -ThrowOnFailure -ShowExitCode 
-        $null = Test-ExternalCommand "`"$__PSCOREFXS_EMSCRIPTEN_SDK_EXE`" activate latest" -ThrowOnFailure -ShowExitCode 
+        $null = Test-ExternalCommand "git -C `"$__PSCOREFXS_EMSCRIPTEN_SDK_DIR`" pull" -ThrowOnFailure -NoAssertion
+        $null = Test-ExternalCommand "`"$__PSCOREFXS_EMSCRIPTEN_SDK_EXE`" install latest" -ThrowOnFailure -ShowExitCode -NoAssertion
+        $null = Test-ExternalCommand "`"$__PSCOREFXS_EMSCRIPTEN_SDK_EXE`" activate latest" -ThrowOnFailure -ShowExitCode  -NoAssertion
     }
 }
 
