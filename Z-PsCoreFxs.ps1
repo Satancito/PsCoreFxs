@@ -1921,7 +1921,7 @@ function Invoke-HttpDownload {
 
         [Parameter()]
         [switch]
-        $ForceDownload,
+        $Force,
 
         [Parameter()]
         [switch]
@@ -1934,7 +1934,7 @@ function Invoke-HttpDownload {
 
     New-Item -Path "$DestinationPath" -ItemType Directory -Force | Out-Null
     $filename = [string]::IsNullOrWhiteSpace($Name) ? "$DestinationPath/$([System.IO.Path]::GetFileName("$Url"))" : "$DestinationPath/$Name"
-    $download = $ForceDownload.IsPresent -or (!(Test-Path -Path "$filename" -PathType Leaf))
+    $download = $Force.IsPresent -or (!(Test-Path -Path "$filename" -PathType Leaf))
     if (![string]::IsNullOrWhiteSpace($Hash) -and !$download) {
         Write-OutputMessage -Value "Preparing download `"$filename`"."
         $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
