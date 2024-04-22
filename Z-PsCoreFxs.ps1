@@ -1934,12 +1934,13 @@ function Invoke-HttpDownload {
 
     New-Item -Path "$DestinationPath" -ItemType Directory -Force | Out-Null
     $filename = [string]::IsNullOrWhiteSpace($Name) ? "$DestinationPath/$([System.IO.Path]::GetFileName("$Url"))" : "$DestinationPath/$Name"
-    $download = $Force.IsPresent -or (!(Test-Path -Path "$filename" -PathType Leaf))
+    $download = (!(Test-Path -Path "$filename" -PathType Leaf))
     if (![string]::IsNullOrWhiteSpace($Hash) -and !$download) {
         Write-OutputMessage -Value "Preparing download `"$filename`"."
         $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
         $download = $download -or (!$Hash.Equals($fileHash))
     }
+    $download = $download ? $download : ($download -or $Force)
     if ($download) {
         Write-OutputMessage -Value "Saving `"$filename`"." 
         Invoke-WebRequest -Uri "$Url" -OutFile "$filename" 
@@ -1954,8 +1955,7 @@ function Invoke-HttpDownload {
             throw "Verification error. Hashes are different: $Hash <> $fileHash; file: `"$filename`"."
         }
     }
-    if($ReturnFilename.IsPresent)
-    {
+    if ($ReturnFilename.IsPresent) {
         return $filename
     }
 }
@@ -2054,6 +2054,15 @@ function Get-CppLibsDir {
 }
 
 function Get-OsName {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [switch]
+        $Minimal
+    )
+    if ($Minimal.IsPresent) {
+        return Select-ValueByPlatform -WindowsValue "Windows" -LinuxValue "Linux" -MacOSValue "MacOS"
+    }
     if ($IsWindows) {
         return (Get-CimInstance Win32_OperatingSystem).Caption
     }
@@ -2220,28 +2229,18 @@ function Install-AndroidNDK {
     param (
         [Parameter()]
         [switch]
-        $ForceDownload,
-
-        [Parameter()]
-        [switch]
-        $ForceExpand
+        $Force
     )
     Write-OutputMessage "Installing Android NDK - Path: `"$__PSCOREFXS_ANDROID_NDK_TEMP_DIR`"" -ForegroundColor Blue
-    $os = Select-ValueByPlatform -WindowsValue "Windows" -LinuxValue "Linux" -MacOSValue "MacOS"
-    $ndkVariant = $__PSCOREFXS_ANDROID_NDK_OS_VARIANTS["$os"]
+    $ndkVariant = $__PSCOREFXS_ANDROID_NDK_OS_VARIANTS["$(Get-OsName -Minimal)"]
     $ndkDirExists = $(Test-Path -Path "$__PSCOREFXS_ANDROID_NDK_DIR")
-    Invoke-HttpDownload -Url "$($ndkVariant.Url)" -DestinationPath "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Hash "$($ndkVariant.Sha1)" -HashAlgorithm SHA1 -Force:$ForceDownload
-    $downloadedFilename = "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/$([System.IO.Path]::GetFileName($ndkVariant.Url))"
-    if ($IsLinux -or $IsWindows) {
-        if (!$ndkDirExists -or $ForceExpand.IsPresent) {
+    $downloadedFilename = Invoke-HttpDownload -Url "$($ndkVariant.Url)" -DestinationPath "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Hash "$($ndkVariant.Sha1)" -HashAlgorithm SHA1 -Force:$ForceDownload -ReturnFilename
+    
+    if (!$ndkDirExists -or $Force.IsPresent) {
+        if ($IsLinux -or $IsWindows) {
             Expand-ZipArchive -Path "$downloadedFilename" -DestinationPath "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR" 
         }
-        else {
-            Write-OutputMessage -Value "Skipping expand archive `"$downloadedFilename`"." 
-        }
-    }
-    if ($IsMacOS) {
-        if (!$ndkDirExists -or $ForceExpand.IsPresent) {
+        if ($IsMacOS) {
             $mountPoint = "/Volumes/android-ndk-$($__PSCOREFXS_ANDROID_NDK_VERSION)"
             Write-OutputMessage "Mounting: `"$downloadedFilename`" in `"$mountPoint`", " -NoNewLine
             Write-PrettyKeyValue "NDK Destination: `"$__PSCOREFXS_ANDROID_NDK_DIR`""
@@ -2250,10 +2249,11 @@ function Install-AndroidNDK {
             & sh -c "cp -R -f -u '$mountPoint/$($ndkVariant.NdkInternalMountedDir)/' '$__PSCOREFXS_ANDROID_NDK_DIR'"
             hdiutil detach "$mountPoint"
         }
-        else {
-            Write-OutputMessage -Value "Skipping expand archive `"$downloadedFilename`"."
-        }
     }
+    else {
+        Write-OutputMessage -Value "Skipping expand archive `"$downloadedFilename`"." 
+    }
+    
     Get-Item -Path "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/*" -Exclude @("$([System.IO.Path]::GetFileName($downloadedFilename))", "$($__PSCOREFXS_ANDROID_NDK_DIR | Split-Path -Leaf)") | Remove-Item -Force -Recurse -ErrorAction Ignore
 }
 
@@ -2415,19 +2415,19 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_VERSION" -Value "r26c" #Update
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION" #Update on next NDK version.
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value @{
     Windows = @{ 
-        Url          = "https://dl.google.com/android/repository/android-ndk-r26c-windows.zip" #Update on next NDK version.
+        Url          = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-windows.zip" #Update on next NDK version.
         Sha1         = "f8c8aa6135241954461b2e3629cada4722e13ee7".ToUpper() #Update on next NDK version.
         HostTag      = "windows-x86_64"
         ToolchainDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/windows-x86_64" #Update on next NDK version.
     }
     Linux   = @{ 
-        Url          = "https://dl.google.com/android/repository/android-ndk-r26c-linux.zip" #Update on next NDK version.
+        Url          = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-linux.zip" #Update on next NDK version.
         Sha1         = "7faebe2ebd3590518f326c82992603170f07c96e".ToUpper() #Update on next NDK version.
         HostTag      = "linux-x86_64"
         ToolchainDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" #Update on next NDK version.
     }
     MacOS   = @{ 
-        Url                   = "https://dl.google.com/android/repository/android-ndk-r26c-darwin.dmg" #Update on next NDK version.
+        Url                   = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-darwin.dmg" #Update on next NDK version.
         Sha1                  = "9d86710c309c500aa0a918fa9902d9d72cca0889".ToUpper() #Update on next NDK version.
         HostTag               = "darwin-x86_64"
         ToolchainDir          = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/darwin-x86_64" #Update on next NDK version.
