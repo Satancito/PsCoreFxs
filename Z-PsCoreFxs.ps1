@@ -2446,7 +2446,7 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Va
     }
     Arm64 = @{ 
         Name = "Arm64"
-        Abi = "arm64-v8a"
+        Abi = "aarch64"
         Triplet = "aarch64-linux-android"
     }
     X86 = @{ 
