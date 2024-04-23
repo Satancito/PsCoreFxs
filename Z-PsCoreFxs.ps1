@@ -2414,7 +2414,7 @@ Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EMCONFIGURE_EXE" -Value "$_
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Value "$(Get-UserHome)/.android-ndk" 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_VERSION" -Value "r26c" #Update on next NDK version. 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION" #Update on next NDK version.
-Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_CLANG_PLUS_PLUS_EXE_SUFFIX" -Value "$(Select-ValueByPlatform -WindowsValue "clang.cmd" -LinuxValue "clang" -MacOSValue "clang")"
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_CLANG_PLUS_PLUS_EXE_SUFFIX" -Value "$(Select-ValueByPlatform -WindowsValue "clang++.cmd" -LinuxValue "clang++" -MacOSValue "clang++")"
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_AR_EXE" -Value "$(Select-ValueByPlatform -WindowsValue "llvm-ar.exe" -LinuxValue "llvm-ar" -MacOSValue "llvm-ar")"
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value @{
     Windows = @{ 
