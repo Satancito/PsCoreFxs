@@ -2251,7 +2251,7 @@ function Install-AndroidNDK {
         }
     }
     else {
-        Write-OutputMessage -Value "Skipping expand archive `"$downloadedFilename`"." 
+        Write-OutputMessage -Value "Skipping expand archive `"$downloadedFilename`". Already installed." 
     }
     
     Get-Item -Path "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/*" -Exclude @("$([System.IO.Path]::GetFileName($downloadedFilename))", "$($__PSCOREFXS_ANDROID_NDK_DIR | Split-Path -Leaf)") | Remove-Item -Force -Recurse -ErrorAction Ignore
