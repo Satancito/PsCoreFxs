@@ -2441,7 +2441,7 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value @{
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Value @{
     Arm = @{ 
         Name = "Arm"
-        Abi = "armeabi-v7a"
+        Abi = "armeabi"
         Triplet = "armv7a-linux-androideabi"
     }
     Arm64 = @{ 
