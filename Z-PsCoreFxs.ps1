@@ -2416,7 +2416,7 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_VERSION" -Value "r26c" #Update
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION" #Update on next NDK version.
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_CLANG_PLUS_PLUS_EXE_SUFFIX" -Value "$(Select-ValueByPlatform -WindowsValue "clang++.cmd" -LinuxValue "clang++" -MacOSValue "clang++")"
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_AR_EXE" -Value "$(Select-ValueByPlatform -WindowsValue "llvm-ar.exe" -LinuxValue "llvm-ar" -MacOSValue "llvm-ar")"
-Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value @{
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered]@{
     Windows = @{ 
         Url          = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-windows.zip" #Update on next NDK version.
         Sha1         = "f8c8aa6135241954461b2e3629cada4722e13ee7".ToUpper() #Update on next NDK version.
@@ -2436,9 +2436,9 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value @{
         ToolchainsDir          = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/darwin-x86_64" #Update on next NDK version.
         NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" #Update on next NDK version.
     }
-}
+})
 
-Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Value @{
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Value $([ordered]@{
     Arm = @{ 
         Name = "Arm"
         Abi = "armv7a"
@@ -2459,9 +2459,9 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Va
         Abi = "x86-64"
         Triplet = "x86_64-linux-android"
     }
-}
+})
 
-Set-GlobalVariable -Name "__PSCOREFXS_WINDOWS_ARCH_CONFIGURATIONS" -Value @{
+Set-GlobalVariable -Name "__PSCOREFXS_WINDOWS_ARCH_CONFIGURATIONS" -Value $([ordered]@{
     X86 = @{ 
         Name = "X86"
         VcVarsArch = "$__PSCOREFXS_VCVARS_ARCH_X86" 
@@ -2477,4 +2477,4 @@ Set-GlobalVariable -Name "__PSCOREFXS_WINDOWS_ARCH_CONFIGURATIONS" -Value @{
         VcVarsArch = "$__PSCOREFXS_VCVARS_ARCH_ARM64"
         VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
     }
-}
+})
