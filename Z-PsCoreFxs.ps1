@@ -2378,6 +2378,7 @@ Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_ARM" -Value "x64_arm"
 Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_ARM64" -Value "x64_arm64"
 
 Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_PLATFORM_TYPE_UWP" -Value "uwp"
+Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_SPECTRE_MODE_PARAMETER" -Value "-vcvars_spectre_libs=spectre"
 
 # █ Visual Studio constants
 Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_VERSION_2022" -Value "2022"
@@ -2413,24 +2414,67 @@ Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EMCONFIGURE_EXE" -Value "$_
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Value "$(Get-UserHome)/.android-ndk" 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_VERSION" -Value "r26c" #Update on next NDK version. 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION" #Update on next NDK version.
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_CLANG_PLUS_PLUS_EXE_SUFFIX" -Value "$(Select-ValueByPlatform -WindowsValue "clang.cmd" -LinuxValue "clang" -MacOSValue "clang")"
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_AR_EXE" -Value "$(Select-ValueByPlatform -WindowsValue "llvm-ar.exe" -LinuxValue "llvm-ar" -MacOSValue "llvm-ar")"
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value @{
     Windows = @{ 
         Url          = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-windows.zip" #Update on next NDK version.
         Sha1         = "f8c8aa6135241954461b2e3629cada4722e13ee7".ToUpper() #Update on next NDK version.
         HostTag      = "windows-x86_64"
-        ToolchainDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/windows-x86_64" #Update on next NDK version.
+        ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/windows-x86_64" #Update on next NDK version.
     }
     Linux   = @{ 
         Url          = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-linux.zip" #Update on next NDK version.
         Sha1         = "7faebe2ebd3590518f326c82992603170f07c96e".ToUpper() #Update on next NDK version.
         HostTag      = "linux-x86_64"
-        ToolchainDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" #Update on next NDK version.
+        ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" #Update on next NDK version.
     }
     MacOS   = @{ 
         Url                   = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-darwin.dmg" #Update on next NDK version.
         Sha1                  = "9d86710c309c500aa0a918fa9902d9d72cca0889".ToUpper() #Update on next NDK version.
         HostTag               = "darwin-x86_64"
-        ToolchainDir          = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/darwin-x86_64" #Update on next NDK version.
+        ToolchainsDir          = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/darwin-x86_64" #Update on next NDK version.
         NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" #Update on next NDK version.
+    }
+}
+
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Value @{
+    Arm = @{ 
+        Name = "Arm"
+        Abi = "armeabi-v7a"
+        Triplet = "armv7a-linux-androideabi"
+    }
+    Arm64 = @{ 
+        Name = "Arm64"
+        Abi = "arm64-v8a"
+        Triplet = "aarch64-linux-android"
+    }
+    X86 = @{ 
+        Name = "X86"
+        Abi = "x86"
+        Triplet = "i686-linux-android"
+    }
+    X64 = @{ 
+        Name = "X64"
+        Abi = "x86-64"
+        Triplet = "x86_64-linux-android"
+    }
+}
+
+Set-GlobalVariable -Name "__PSCOREFXS_WINDOWS_ARCH_CONFIGURATIONS" -Value @{
+    X86 = @{ 
+        Name = "X86"
+        VcVarsArch = "$__PSCOREFXS_VCVARS_ARCH_X86" 
+        VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
+    }
+    X6464 = @{ 
+        Name = "X64"
+        VcVarsArch = "$__PSCOREFXS_VCVARS_ARCH_X64"
+        VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
+    }
+    Arm64 = @{ 
+        Name = "Arm64"
+        VcVarsArch = "$__PSCOREFXS_VCVARS_ARCH_ARM64"
+        VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
     }
 }
