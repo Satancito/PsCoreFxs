@@ -2537,7 +2537,7 @@ Set-GlobalVariable -Name "__PSCOREFXS_WINDOWS_ARCH_CONFIGURATIONS" -Value $([ord
             VcVarsArch        = "$__PSCOREFXS_VCVARS_ARCH_X86" 
             VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
         }
-        X6464 = @{ 
+        X64 = @{ 
             Name              = "X64"
             VcVarsArch        = "$__PSCOREFXS_VCVARS_ARCH_X64"
             VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
