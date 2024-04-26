@@ -1934,12 +1934,18 @@ function Invoke-HttpDownload {
     New-Item -Path "$DestinationPath" -ItemType Directory -Force | Out-Null
     $filename = [string]::IsNullOrWhiteSpace($Name) ? "$DestinationPath/$([System.IO.Path]::GetFileName("$Url"))" : "$DestinationPath/$Name"
     $download = (!(Test-Path -Path "$filename" -PathType Leaf))
-    if (![string]::IsNullOrWhiteSpace($Hash) -and !$download) {
-        Write-OutputMessage -Value "Preparing download `"$filename`"."
-        $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
-        $download = $download -or (!$Hash.Equals($fileHash))
+    
+    Write-OutputMessage -Value "Preparing download `"$filename`"."
+    if (![string]::IsNullOrWhiteSpace($Hash) ) {
+        if (!$download) {
+            $fileHash = (Get-FileHash -Path "$filename" -Algorithm "$HashAlgorithm").Hash
+            $download = $download -or (!$Hash.Equals($fileHash))
+        }
     }
-    $download = $download ? $download : ($download -or $Force)
+    else {
+        $download = $download -or $Force.IsPresent
+    }
+
     if ($download) {
         Write-OutputMessage -Value "Saving `"$filename`"." 
         Invoke-WebRequest -Uri "$Url" -OutFile "$filename" 
@@ -2230,46 +2236,45 @@ class AndroidNDKApiValidateSet : System.Management.Automation.IValidateSetValues
     }
 
     static [String[]] $ValidValues = [AndroidNDKApiValidateSet]::new().GetValidValues()
-    static [bool] IsValidApi([string] $api){
+    static [bool] IsValidApi([string] $api) {
         return ($api -in [AndroidNDKApiValidateSet]::ValidValues)
     }
 }
 
-function Test-AndroidNDKApi{
+function Test-AndroidNDKApi {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $Api
     )
     return [AndroidNDKApiValidateSet]::IsValidApi($Api)
 }
 
-function Assert-AndroidNDKApi{
+function Assert-AndroidNDKApi {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $Api
     )
     Write-OutputMessage "Validating Android API number [$Api]: " -ForegroundColor Magenta -NoNewLine
-    if(Test-AndroidNDKApi -Api $Api)
-    {
-       Write-OutputMessage "OK." 
-       return
+    if (Test-AndroidNDKApi -Api $Api) {
+        Write-OutputMessage "OK." 
+        return
     } 
     throw "Invalid Android NDK API `"$Api`"."
     
 }
 
-function Mount-MacOSDiskImage{
+function Mount-MacOSDiskImage {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $DiskImageFilename,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $MountPoint
     )
@@ -2278,10 +2283,10 @@ function Mount-MacOSDiskImage{
     & hdiutil mount "$DiskImageFilename" -mountpoint "$MountPoint"
 }
 
-function Dismount-MacOSDiskImage{
+function Dismount-MacOSDiskImage {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $MountPoint
     )
@@ -2482,64 +2487,64 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDR
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_CLANG_PLUS_PLUS_EXE_SUFFIX" -Value "$(Select-ValueByPlatform -WindowsValue "clang++.cmd" -LinuxValue "clang++" -MacOSValue "clang++")"
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_AR_EXE" -Value "$(Select-ValueByPlatform -WindowsValue "llvm-ar.exe" -LinuxValue "llvm-ar" -MacOSValue "llvm-ar")"
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered]@{
-    Windows = @{ 
-        Url          = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-windows.zip" #Update on next NDK version.
-        Sha1         = "f8c8aa6135241954461b2e3629cada4722e13ee7".ToUpper() #Update on next NDK version.
-        HostTag      = "windows-x86_64"
-        ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/windows-x86_64" #Update on next NDK version.
-    }
-    Linux   = @{ 
-        Url          = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-linux.zip" #Update on next NDK version.
-        Sha1         = "7faebe2ebd3590518f326c82992603170f07c96e".ToUpper() #Update on next NDK version.
-        HostTag      = "linux-x86_64"
-        ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" #Update on next NDK version.
-    }
-    MacOS   = @{ 
-        Url                   = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-darwin.dmg" #Update on next NDK version.
-        Sha1                  = "9d86710c309c500aa0a918fa9902d9d72cca0889".ToUpper() #Update on next NDK version.
-        HostTag               = "darwin-x86_64"
-        ToolchainsDir          = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/darwin-x86_64" #Update on next NDK version.
-        NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" #Update on next NDK version.
-    }
-})
+        Windows = @{ 
+            Url           = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-windows.zip" #Update on next NDK version.
+            Sha1          = "f8c8aa6135241954461b2e3629cada4722e13ee7".ToUpper() #Update on next NDK version.
+            HostTag       = "windows-x86_64"
+            ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/windows-x86_64" #Update on next NDK version.
+        }
+        Linux   = @{ 
+            Url           = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-linux.zip" #Update on next NDK version.
+            Sha1          = "7faebe2ebd3590518f326c82992603170f07c96e".ToUpper() #Update on next NDK version.
+            HostTag       = "linux-x86_64"
+            ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" #Update on next NDK version.
+        }
+        MacOS   = @{ 
+            Url                   = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-darwin.dmg" #Update on next NDK version.
+            Sha1                  = "9d86710c309c500aa0a918fa9902d9d72cca0889".ToUpper() #Update on next NDK version.
+            HostTag               = "darwin-x86_64"
+            ToolchainsDir         = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/darwin-x86_64" #Update on next NDK version.
+            NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" #Update on next NDK version.
+        }
+    })
 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Value $([ordered]@{
-    Arm = @{ 
-        Name = "Arm"
-        Abi = "armv7a"
-        Triplet = "armv7a-linux-androideabi"
-    }
-    Arm64 = @{ 
-        Name = "Arm64"
-        Abi = "aarch64"
-        Triplet = "aarch64-linux-android"
-    }
-    X86 = @{ 
-        Name = "X86"
-        Abi = "x86"
-        Triplet = "i686-linux-android"
-    }
-    X64 = @{ 
-        Name = "X64"
-        Abi = "x86-64"
-        Triplet = "x86_64-linux-android"
-    }
-})
+        Arm   = @{ 
+            Name    = "Arm"
+            Abi     = "armv7a"
+            Triplet = "armv7a-linux-androideabi"
+        }
+        Arm64 = @{ 
+            Name    = "Arm64"
+            Abi     = "aarch64"
+            Triplet = "aarch64-linux-android"
+        }
+        X86   = @{ 
+            Name    = "X86"
+            Abi     = "x86"
+            Triplet = "i686-linux-android"
+        }
+        X64   = @{ 
+            Name    = "X64"
+            Abi     = "x86-64"
+            Triplet = "x86_64-linux-android"
+        }
+    })
 
 Set-GlobalVariable -Name "__PSCOREFXS_WINDOWS_ARCH_CONFIGURATIONS" -Value $([ordered]@{
-    X86 = @{ 
-        Name = "X86"
-        VcVarsArch = "$__PSCOREFXS_VCVARS_ARCH_X86" 
-        VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
-    }
-    X6464 = @{ 
-        Name = "X64"
-        VcVarsArch = "$__PSCOREFXS_VCVARS_ARCH_X64"
-        VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
-    }
-    Arm64 = @{ 
-        Name = "Arm64"
-        VcVarsArch = "$__PSCOREFXS_VCVARS_ARCH_ARM64"
-        VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
-    }
-})
+        X86   = @{ 
+            Name              = "X86"
+            VcVarsArch        = "$__PSCOREFXS_VCVARS_ARCH_X86" 
+            VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
+        }
+        X6464 = @{ 
+            Name              = "X64"
+            VcVarsArch        = "$__PSCOREFXS_VCVARS_ARCH_X64"
+            VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
+        }
+        Arm64 = @{ 
+            Name              = "Arm64"
+            VcVarsArch        = "$__PSCOREFXS_VCVARS_ARCH_ARM64"
+            VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
+        }
+    })
