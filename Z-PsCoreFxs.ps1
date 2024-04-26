@@ -2267,7 +2267,7 @@ function Assert-AndroidNDKApi {
     
 }
 
-function Mount-MacOSDiskImage {
+function Mount-DmgImage {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
@@ -2283,7 +2283,7 @@ function Mount-MacOSDiskImage {
     & hdiutil mount "$DiskImageFilename" -mountpoint "$MountPoint"
 }
 
-function Dismount-MacOSDiskImage {
+function Dismount-DmgImage {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
@@ -2312,11 +2312,11 @@ function Install-AndroidNDK {
         }
         if ($IsMacOS) {
             $mountPoint = "/Volumes/android-ndk-$($__PSCOREFXS_ANDROID_NDK_VERSION)"
-            Mount-MacOSDiskImage -MountPoint "$mountPoint" -DiskImageFilename "$downloadedFilename"
+            Mount-DmgImage -MountPoint "$mountPoint" -DiskImageFilename "$downloadedFilename"
             Write-PrettyKeyValue "NDK Destination: `"$__PSCOREFXS_ANDROID_NDK_DIR`""
             New-Item -Path "$__PSCOREFXS_ANDROID_NDK_DIR" -ItemType Directory -Force | Out-Null
             & sh -c "cp -R -f -u '$mountPoint/$($ndkVariant.NdkInternalMountedDir)/' '$__PSCOREFXS_ANDROID_NDK_DIR'"
-            Dismount-MacOSDiskImage -MountPoint "$mountPoint"
+            Dismount-DmgImage -MountPoint "$mountPoint"
         }
     }
     else {
