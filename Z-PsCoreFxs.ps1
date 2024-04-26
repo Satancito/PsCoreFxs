@@ -530,7 +530,7 @@ function Test-OnlyWindows {
     )
     process {
         if (!$IsWindows) {
-            Write-Error "Windows Operating system is required for run this function."
+            Write-Error "Windows operating system is required to run this function."
             exit
         }
     }
@@ -541,7 +541,7 @@ function Test-OnlyLinux {
     )
     process {
         if (!$IsLinux) {
-            Write-Error "Linux Operating system is required for run this function."
+            Write-Error "Linux operating system is required to run this function."
             exit
         }
     }
@@ -552,8 +552,7 @@ function Test-OnlyMacOS {
     )
     process {
         if (!$IsMacOS) {
-            Write-Error "MacOS Operating system is required for run this function."
-            exit
+            throw "MacOS operating system is required to run this function."
         }
     }
 }
@@ -2225,6 +2224,72 @@ function Remove-EmscriptenSDK {
 
 # ███ Android NDK functions
 
+class AndroidNDKApiValidateSet : System.Management.Automation.IValidateSetValuesGenerator {
+    [String[]] GetValidValues() {
+        return $Global:__PSCOREFXS_ANDROID_NDK_API_NUMBERS
+    }
+
+    static [String[]] $ValidValues = [AndroidNDKApiValidateSet]::new().GetValidValues()
+    static [bool] IsValidApi([string] $api){
+        return ($api -in [AndroidNDKApiValidateSet]::ValidValues)
+    }
+}
+
+function Test-AndroidNDKApi{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]
+        $Api
+    )
+    return [AndroidNDKApiValidateSet]::IsValidApi($Api)
+}
+
+function Assert-AndroidNDKApi{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]
+        $Api
+    )
+    Write-OutputMessage "Validating Android API number [$Api]: " -ForegroundColor Magenta -NoNewLine
+    if(Test-AndroidNDKApi -Api $Api)
+    {
+       Write-OutputMessage "OK." 
+       return
+    } 
+    throw "Invalid Android NDK API `"$Api`"."
+    
+}
+
+function Mount-MacOSDiskImage{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]
+        $DiskImageFilename,
+
+        [Parameter(Mandatory=$true)]
+        [string]
+        $MountPoint
+    )
+    Test-OnlyMacOS
+    Write-OutputMessage "Mounting: `"$DiskImageFilename`" in `"$MountPoint`", "
+    & hdiutil mount "$DiskImageFilename" -mountpoint "$MountPoint"
+}
+
+function Dismount-MacOSDiskImage{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]
+        $MountPoint
+    )
+    Test-OnlyMacOS
+    Write-OutputMessage "Dismounting: `"$MountPoint`""
+    & hdiutil detach "$MountPoint"
+}
+
 function Install-AndroidNDK {
     param (
         [Parameter()]
@@ -2242,12 +2307,11 @@ function Install-AndroidNDK {
         }
         if ($IsMacOS) {
             $mountPoint = "/Volumes/android-ndk-$($__PSCOREFXS_ANDROID_NDK_VERSION)"
-            Write-OutputMessage "Mounting: `"$downloadedFilename`" in `"$mountPoint`", " -NoNewLine
+            Mount-MacOSDiskImage -MountPoint "$mountPoint" -DiskImageFilename "$downloadedFilename"
             Write-PrettyKeyValue "NDK Destination: `"$__PSCOREFXS_ANDROID_NDK_DIR`""
-            & hdiutil mount "$downloadedFilename" -mountpoint "$mountPoint"
             New-Item -Path "$__PSCOREFXS_ANDROID_NDK_DIR" -ItemType Directory -Force | Out-Null
             & sh -c "cp -R -f -u '$mountPoint/$($ndkVariant.NdkInternalMountedDir)/' '$__PSCOREFXS_ANDROID_NDK_DIR'"
-            hdiutil detach "$mountPoint"
+            Dismount-MacOSDiskImage -MountPoint "$mountPoint"
         }
     }
     else {
@@ -2412,6 +2476,7 @@ Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EMCONFIGURE_EXE" -Value "$_
 
 # █ Android NDK constants
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Value "$(Get-UserHome)/.android-ndk" 
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_API_NUMBERS" -Value @("21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34") # Update on new available Android API. 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_VERSION" -Value "r26c" #Update on next NDK version. 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION" #Update on next NDK version.
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_CLANG_PLUS_PLUS_EXE_SUFFIX" -Value "$(Select-ValueByPlatform -WindowsValue "clang++.cmd" -LinuxValue "clang++" -MacOSValue "clang++")"
