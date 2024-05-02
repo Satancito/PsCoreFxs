@@ -2584,3 +2584,11 @@ Set-GlobalVariable -Name "__PSCOREFXS_WINDOWS_ARCH_CONFIGURATIONS" -Value $([ord
             VcVarsSpectreMode = $__PSCOREFXS_VCVARS_SPECTRE_MODE_PARAMETER
         }
     })
+
+    Set-GlobalVariable -Name "__PSCOREFXS_EMSCRIPTEN_CONFIGURATIONS" -Value $([ordered]@{
+        Wasm   = [ordered]@{ 
+            Name              = $__PSCOREFXS_DEBUG_CONFIGURATION 
+            NameDebug         = "Wasm$__PSCOREFXS_DEBUG_CONFIGURATION"
+            NameRelease       = "Wasm$__PSCOREFXS_RELEASE_CONFIGURATION"
+        }
+    })
