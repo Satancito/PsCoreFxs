@@ -2439,6 +2439,9 @@ Set-GlobalConstant -Name "__PSCOREFXS_GIT_EXE" -Value $(Select-ValueByPlatform -
 Set-GlobalConstant -Name "__PSCOREFXS_TAR_EXE" -Value $(Select-ValueByPlatform -WindowsValue "tar.exe" -LinuxValue "tar" -MacOSValue "tar")
 Set-GlobalConstant -Name "__PSCOREFXS_UNZIP_EXE" -Value "unzip"
 
+# █ Build configuration constants
+Set-GlobalConstant -Name "__PSCOREFXS_DEBUG_CONFIGURATION" -Value "Debug"
+Set-GlobalConstant -Name "__PSCOREFXS_RELEASE_CONFIGURATION" -Value "Release"
 
 # █ Vcvarsall.bat constants
 Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_X86" -Value "x86"
