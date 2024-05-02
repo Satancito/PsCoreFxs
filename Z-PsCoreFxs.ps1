@@ -2509,19 +2509,19 @@ Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME" -Valu
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME" -Value "X64"  
 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered]@{
-        Windows = @{ 
+        Windows = [ordered]@{ 
             Url           = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-windows.zip" #Update on next NDK version.
             Sha1          = "f8c8aa6135241954461b2e3629cada4722e13ee7".ToUpper() #Update on next NDK version.
             HostTag       = "windows-x86_64"
             ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/windows-x86_64" #Update on next NDK version.
         }
-        Linux   = @{ 
+        Linux   = [ordered]@{ 
             Url           = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-linux.zip" #Update on next NDK version.
             Sha1          = "7faebe2ebd3590518f326c82992603170f07c96e".ToUpper() #Update on next NDK version.
             HostTag       = "linux-x86_64"
             ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" #Update on next NDK version.
         }
-        MacOS   = @{ 
+        MacOS   = [ordered]@{ 
             Url                   = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-darwin.dmg" #Update on next NDK version.
             Sha1                  = "9d86710c309c500aa0a918fa9902d9d72cca0889".ToUpper() #Update on next NDK version.
             HostTag               = "darwin-x86_64"
@@ -2552,7 +2552,7 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Va
             Abi         = $__PSCOREFXS_ANDROID_NDK_X86_ABI
             Triplet     = $__PSCOREFXS_ANDROID_NDK_X86_TRIPLET
         }
-        "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME"   = @{ 
+        "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME"   = [ordered]@{ 
             Name        = $__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME
             NameDebug   = "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
             NameRelease = "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
@@ -2562,21 +2562,21 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Va
     })
 
 Set-GlobalVariable -Name "__PSCOREFXS_WINDOWS_ARCH_CONFIGURATIONS" -Value $([ordered]@{
-        "$__PSCOREFXS_WINDOWS_X86_ARCH_NORMALIZED_NAME"   = @{ 
+        "$__PSCOREFXS_WINDOWS_X86_ARCH_NORMALIZED_NAME"   = [ordered]@{ 
             Name              = $__PSCOREFXS_WINDOWS_X86_ARCH_NORMALIZED_NAME
             NameDebug         = "$__PSCOREFXS_WINDOWS_X86_ARCH_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
             NameRelease       = "$__PSCOREFXS_WINDOWS_X86_ARCH_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
             VcVarsArch        = "$__PSCOREFXS_VCVARS_X86_ARCH" 
             VcVarsSpectreMode = $__PSCOREFXS_VCVARS_SPECTRE_MODE_PARAMETER
         }
-        "$__PSCOREFXS_WINDOWS_X64_ARCH_NORMALIZED_NAME"   = @{ 
+        "$__PSCOREFXS_WINDOWS_X64_ARCH_NORMALIZED_NAME"   = [ordered]@{ 
             Name              = $__PSCOREFXS_WINDOWS_X64_ARCH_NORMALIZED_NAME
             NameDebug         = "$__PSCOREFXS_WINDOWS_X64_ARCH_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
             NameRelease       = "$__PSCOREFXS_WINDOWS_X64_ARCH_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
             VcVarsArch        = "$__PSCOREFXS_VCVARS_X64_ARCH"
             VcVarsSpectreMode = $__PSCOREFXS_VCVARS_SPECTRE_MODE_PARAMETER
         }
-        "$__PSCOREFXS_WINDOWS_ARM64_ARCH_NORMALIZED_NAME" = @{ 
+        "$__PSCOREFXS_WINDOWS_ARM64_ARCH_NORMALIZED_NAME" = [ordered]@{ 
             Name              = $__PSCOREFXS_WINDOWS_ARM64_ARCH_NORMALIZED_NAME
             NameDebug         = "$__PSCOREFXS_WINDOWS_ARM64_ARCH_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
             NameRelease       = "$__PSCOREFXS_WINDOWS_ARM64_ARCH_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
