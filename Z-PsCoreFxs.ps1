@@ -2444,10 +2444,10 @@ Set-GlobalConstant -Name "__PSCOREFXS_DEBUG_CONFIGURATION" -Value "Debug"
 Set-GlobalConstant -Name "__PSCOREFXS_RELEASE_CONFIGURATION" -Value "Release"
 
 # █ Vcvarsall.bat constants
-Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_X86" -Value "x86"
-Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_X64" -Value "x64"
-Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_ARM" -Value "x64_arm"
-Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARCH_ARM64" -Value "x64_arm64"
+Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_X86_ARCH" -Value "x86"
+Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_X64_ARCH" -Value "x64"
+Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARM_ARCH" -Value "x64_arm"
+Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_ARM64_ARCH" -Value "x64_arm64"
 
 Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_PLATFORM_TYPE_UWP" -Value "uwp"
 Set-GlobalConstant -Name "__PSCOREFXS_VCVARS_SPECTRE_MODE_PARAMETER" -Value "-vcvars_spectre_libs=spectre"
@@ -2458,6 +2458,12 @@ Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_VERSION_2022" -Value "2022"
 Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_EDITION_COMMUNITY" -Value "Community"
 Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_EDITION_PROFESSIONAL" -Value "Professional"
 Set-GlobalConstant -Name "__PSCOREFXS_VISUAL_STUDIO_EDITION_ENTERPRISE" -Value "Enterprise"
+
+# █ Windows Arch
+Set-GlobalConstant -Name "__PSCOREFXS_WINDOWS_X86_ARCH_NORMALIZED_NAME" -Value "X86"
+Set-GlobalConstant -Name "__PSCOREFXS_WINDOWS_X64_ARCH_NORMALIZED_NAME" -Value "X64"
+Set-GlobalConstant -Name "__PSCOREFXS_WINDOWS_ARM_ARCH_NORMALIZED_NAME" -Value "Arm"
+Set-GlobalConstant -Name "__PSCOREFXS_WINDOWS_ARM64_ARCH_NORMALIZED_NAME" -Value "Arm64"
 
 # █ DbProviders constans     TODO: Rename
 Set-GlobalConstant -Name "SQLSERVER_PROVIDER" -Value "SqlServer"
@@ -2489,6 +2495,19 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_VERSION" -Value "r26c" #Update
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION" #Update on next NDK version.
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_CLANG_PLUS_PLUS_EXE_SUFFIX" -Value "$(Select-ValueByPlatform -WindowsValue "clang++.cmd" -LinuxValue "clang++" -MacOSValue "clang++")"
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_AR_EXE" -Value "$(Select-ValueByPlatform -WindowsValue "llvm-ar.exe" -LinuxValue "llvm-ar" -MacOSValue "llvm-ar")"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM_ABI" -Value "armv7a"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM64_ABI" -Value "aarch64"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X86_ABI" -Value "x86"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X64_ABI" -Value "x86-64"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM_TRIPLET" -Value "armv7a-linux-androideabi"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM64_TRIPLET" -Value "aarch64-linux-android"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X86_TRIPLET" -Value "i686-linux-android"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X64_TRIPLET" -Value "x86_64-linux-android"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME" -Value "Arm"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME" -Value "Arm64"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME" -Value "X86"
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME" -Value "X64"  
+
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered]@{
         Windows = @{ 
             Url           = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-windows.zip" #Update on next NDK version.
@@ -2512,50 +2531,50 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered
     })
 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Value $([ordered]@{
-        Arm   = @{ 
-            Name    = "Arm"
-            NameDebug    = "Arm-$__PSCOREFXS_DEBUG_CONFIGURATION"
-            NameRelease    = "Arm-$__PSCOREFXS_RELEASE_CONFIGURATION"
-            Abi     = "armv7a"
-            Triplet = "armv7a-linux-androideabi"
+        "$__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME"   = [ordered]@{ 
+            Name        = $__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME
+            NameDebug   = "$__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
+            NameRelease = "$__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
+            Abi         = $__PSCOREFXS_ANDROID_NDK_ARM_ABI
+            Triplet     = $__PSCOREFXS_ANDROID_NDK_ARM_TRIPLET
         }
-        Arm64 = @{ 
-            Name    = "Arm64"
-            NameDebug    = "Arm64-$__PSCOREFXS_DEBUG_CONFIGURATION"
-            NameRelease    = "Arm64-$__PSCOREFXS_RELEASE_CONFIGURATION"
-            Abi     = "aarch64"
-            Triplet = "aarch64-linux-android"
+        "$__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME" = [ordered]@{ 
+            Name        = $__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME
+            NameDebug   = "$__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
+            NameRelease = "$__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
+            Abi         = $__PSCOREFXS_ANDROID_NDK_ARM64_ABI
+            Triplet     = $__PSCOREFXS_ANDROID_NDK_ARM64_TRIPLET
         }
-        X86   = @{ 
-            Name    = "X86"
-            NameDebug    = "X86-$__PSCOREFXS_DEBUG_CONFIGURATION"
-            NameRelease    = "X86-$__PSCOREFXS_RELEASE_CONFIGURATION"
-            Abi     = "x86"
-            Triplet = "i686-linux-android"
+        "$__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME"   = [ordered]@{ 
+            Name        = $__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME
+            NameDebug   = "$__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
+            NameRelease = "$__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
+            Abi         = $__PSCOREFXS_ANDROID_NDK_X86_ABI
+            Triplet     = $__PSCOREFXS_ANDROID_NDK_X86_TRIPLET
         }
-        X64   = @{ 
-            Name    = "X64"
-            NameDebug    = "X64-$__PSCOREFXS_DEBUG_CONFIGURATION"
-            NameRelease    = "X64-$__PSCOREFXS_RELEASE_CONFIGURATION"
-            Abi     = "x86-64"
-            Triplet = "x86_64-linux-android"
+        "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME"   = @{ 
+            Name        = $__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME
+            NameDebug   = "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
+            NameRelease = "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
+            Abi         = $__PSCOREFXS_ANDROID_NDK_X64_ABI
+            Triplet     = $__PSCOREFXS_ANDROID_NDK_X64_TRIPLET
         }
     })
 
 Set-GlobalVariable -Name "__PSCOREFXS_WINDOWS_ARCH_CONFIGURATIONS" -Value $([ordered]@{
-        X86   = @{ 
-            Name              = "X86"
-            VcVarsArch        = "$__PSCOREFXS_VCVARS_ARCH_X86" 
-            VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
+        "$__PSCOREFXS_WINDOWS_X86_ARCH_NORMALIZED_NAME"   = @{ 
+            Name              = $__PSCOREFXS_WINDOWS_X86_ARCH_NORMALIZED_NAME
+            VcVarsArch        = "$__PSCOREFXS_VCVARS_X86_ARCH" 
+            VcVarsSpectreMode = $__PSCOREFXS_VCVARS_SPECTRE_MODE_PARAMETER
         }
-        X64 = @{ 
-            Name              = "X64"
-            VcVarsArch        = "$__PSCOREFXS_VCVARS_ARCH_X64"
-            VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
+        "$__PSCOREFXS_WINDOWS_X64_ARCH_NORMALIZED_NAME"   = @{ 
+            Name              = $__PSCOREFXS_WINDOWS_X64_ARCH_NORMALIZED_NAME
+            VcVarsArch        = "$__PSCOREFXS_VCVARS_X64_ARCH"
+            VcVarsSpectreMode = $__PSCOREFXS_VCVARS_SPECTRE_MODE_PARAMETER
         }
-        Arm64 = @{ 
-            Name              = "Arm64"
-            VcVarsArch        = "$__PSCOREFXS_VCVARS_ARCH_ARM64"
-            VcVarsSpectreMode = "-vcvars_spectre_libs=spectre"
+        "$__PSCOREFXS_WINDOWS_ARM64_ARCH_NORMALIZED_NAME" = @{ 
+            Name              = $__PSCOREFXS_WINDOWS_ARM64_ARCH_NORMALIZED_NAME
+            VcVarsArch        = "$__PSCOREFXS_VCVARS_ARM64_ARCH"
+            VcVarsSpectreMode = $__PSCOREFXS_VCVARS_SPECTRE_MODE_PARAMETER
         }
     })
