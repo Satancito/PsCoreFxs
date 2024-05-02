@@ -2511,21 +2511,29 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Value $([ordered]@{
         Arm   = @{ 
             Name    = "Arm"
+            NameDebug    = "Arm-Debug"
+            NameRelease    = "Arm-Release"
             Abi     = "armv7a"
             Triplet = "armv7a-linux-androideabi"
         }
         Arm64 = @{ 
             Name    = "Arm64"
+            NameDebug    = "Arm64-Debug"
+            NameRelease    = "Arm64-Release"
             Abi     = "aarch64"
             Triplet = "aarch64-linux-android"
         }
         X86   = @{ 
             Name    = "X86"
+            NameDebug    = "X86-Debug"
+            NameRelease    = "X86-Release"
             Abi     = "x86"
             Triplet = "i686-linux-android"
         }
         X64   = @{ 
             Name    = "X64"
+            NameDebug    = "X64-Debug"
+            NameRelease    = "X64-Release"
             Abi     = "x86-64"
             Triplet = "x86_64-linux-android"
         }
