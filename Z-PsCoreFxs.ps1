@@ -2494,6 +2494,7 @@ Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_API_NUMBERS" -Value @("21", "2
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_VERSION" -Value "r26c" #Update on next NDK version. 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION" #Update on next NDK version.
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_CLANG_PLUS_PLUS_EXE_SUFFIX" -Value "$(Select-ValueByPlatform -WindowsValue "clang++.cmd" -LinuxValue "clang++" -MacOSValue "clang++")"
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_LD_EXE" -Value "$(Select-ValueByPlatform -WindowsValue "ld.exe" -LinuxValue "ld" -MacOSValue "ld")"
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_AR_EXE" -Value "$(Select-ValueByPlatform -WindowsValue "llvm-ar.exe" -LinuxValue "llvm-ar" -MacOSValue "llvm-ar")"
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM_ABI" -Value "armv7a"
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM64_ABI" -Value "aarch64"
