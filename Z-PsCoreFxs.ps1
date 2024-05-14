@@ -2241,30 +2241,40 @@ class AndroidNDKApiValidateSet : System.Management.Automation.IValidateSetValues
     }
 }
 
-function Test-AndroidNDKApi {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]
-        $Api
-    )
-    return [AndroidNDKApiValidateSet]::IsValidApi($Api)
-}
-
 function Assert-AndroidNDKApi {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
+        [Parameter()]
         [string]
         $Api
     )
+    $Api = [string]::IsNullOrWhiteSpace($Api)? ([AndroidNDKApiValidateSet]::ValidValues | Select-Object -First 1) : $Api
     Write-OutputMessage "Validating Android API number [$Api]: " -ForegroundColor Magenta -NoNewLine
-    if (Test-AndroidNDKApi -Api $Api) {
+    if ([AndroidNDKApiValidateSet]::IsValidApi($Api)) {
         Write-OutputMessage "OK." 
         return
     } 
     throw "Invalid Android NDK API `"$Api`"."
     
+}
+
+function Test-AndroidNDKApi {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string]
+        $Api,
+
+        [Parameter()]
+        [switch]
+        $Assert
+    )
+    $Api = [string]::IsNullOrWhiteSpace($Api)? ([AndroidNDKApiValidateSet]::ValidValues | Select-Object -First 1) : $Api
+    if($Assert.IsPresent)
+    {
+        Assert-AndroidNDKApi -Api $Api
+    }
+    return [AndroidNDKApiValidateSet]::IsValidApi($Api) ? $Api : $false
 }
 
 function Mount-DmgImage {
