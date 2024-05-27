@@ -2024,6 +2024,34 @@ function Expand-ZipArchive {
     }
 }
 
+function Mount-DmgImage {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $DiskImageFilename,
+
+        [Parameter(Mandatory = $true)]
+        [string]
+        $MountPoint
+    )
+    Test-OnlyMacOS
+    Write-OutputMessage "Mounting: `"$DiskImageFilename`" in `"$MountPoint`", "
+    & hdiutil mount "$DiskImageFilename" -mountpoint "$MountPoint"
+}
+
+function Dismount-DmgImage {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $MountPoint
+    )
+    Test-OnlyMacOS
+    Write-OutputMessage "Dismounting: `"$MountPoint`""
+    & hdiutil detach "$MountPoint"
+}
+
 function Join-CompileCommandsJson {
     param (
         [Parameter(Mandatory = $true)]
@@ -2066,7 +2094,7 @@ function Get-OsName {
         $Minimal
     )
     if ($Minimal.IsPresent) {
-        return Select-ValueByPlatform -WindowsValue "Windows" -LinuxValue "Linux" -MacOSValue "MacOS"
+        return Select-ValueByPlatform -WindowsValue "$__PSCOREFXS_WINDOWS_OS_NAME" -LinuxValue "$__PSCOREFXS_LINUX_OS_NAME" -MacOSValue "$__PSCOREFXS_MACOS_OS_NAME"
     }
     if ($IsWindows) {
         return (Get-CimInstance Win32_OperatingSystem).Caption
@@ -2241,6 +2269,12 @@ class AndroidNDKApiValidateSet : System.Management.Automation.IValidateSetValues
     }
 }
 
+class AndroidNdkAbiNormalizedNameValidateSet : System.Management.Automation.IValidateSetValuesGenerator {
+    [String[]] GetValidValues() {
+        return $Global:__PSCOREFXS_ANDROID_NDK_ABI_NORMLIZED_NAMES
+    }
+}
+
 function Assert-AndroidNDKApi {
     [CmdletBinding()]
     param (
@@ -2255,7 +2289,6 @@ function Assert-AndroidNDKApi {
         return
     } 
     throw "Invalid Android NDK API `"$Api`"."
-    
 }
 
 function Test-AndroidNDKApi {
@@ -2270,39 +2303,30 @@ function Test-AndroidNDKApi {
         $Assert
     )
     $Api = [string]::IsNullOrWhiteSpace($Api)? ([AndroidNDKApiValidateSet]::ValidValues | Select-Object -First 1) : $Api
-    if($Assert.IsPresent)
-    {
+    if ($Assert.IsPresent) {
         Assert-AndroidNDKApi -Api $Api
     }
     return [AndroidNDKApiValidateSet]::IsValidApi($Api) ? $Api : $false
 }
 
-function Mount-DmgImage {
-    [CmdletBinding()]
+function Get-AndroidNDKCompiler {
     param (
-        [Parameter(Mandatory = $true)]
         [string]
-        $DiskImageFilename,
+        $AndroidAPI = [string]::Empty,
 
-        [Parameter(Mandatory = $true)]
         [string]
-        $MountPoint
-    )
-    Test-OnlyMacOS
-    Write-OutputMessage "Mounting: `"$DiskImageFilename`" in `"$MountPoint`", "
-    & hdiutil mount "$DiskImageFilename" -mountpoint "$MountPoint"
-}
+        [Parameter(Mandatory = $true)]
+        [ValidateSet([AndroidNdkAbiNormalizedNameValidateSet], IgnoreCase = $false, ErrorMessage = "Value `"{0}`" is invalid. Try one of: `"{1}`"")]
+        $NormalizedABI,
 
-function Dismount-DmgImage {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
         [string]
-        $MountPoint
+        [ValidateSet([OSNameValidateSet], IgnoreCase = $false, ErrorMessage = "Value `"{0}`" is invalid. Try one of: `"{1}`"")]
+        $OS = $(Get-OsName -Minimal)
     )
-    Test-OnlyMacOS
-    Write-OutputMessage "Dismounting: `"$MountPoint`""
-    & hdiutil detach "$MountPoint"
+    $AndroidAPI = Test-AndroidNDKApi -Api $AndroidAPI -Assert
+    $toolchainsDir = $__PSCOREFXS_ANDROID_NDK_OS_VARIANTS[$OS].ToolchainsDir
+    $triplet = $__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS[$NormalizedABI].Triplet
+    return "$toolchainsDir/bin/$triplet$AndroidAPI-$__PSCOREFXS_ANDROID_NDK_CLANG_PLUS_PLUS_EXE_SUFFIX"
 }
 
 function Install-AndroidNDK {
@@ -2425,7 +2449,18 @@ class BuildConfigurationValidateSet : System.Management.Automation.IValidateSetV
         return @("Debug", "Release")
     }
 }
+
+class OsNameValidateSet : System.Management.Automation.IValidateSetValuesGenerator {
+    [String[]] GetValidValues() {
+        return $Global:__PSCOREFXS_OS_NAMES
+    }
+}
+
 # ███ Constants
+Set-GlobalConstant -Name "__PSCOREFXS_WINDOWS_OS_NAME" -Value "Windows"
+Set-GlobalConstant -Name "__PSCOREFXS_LINUX_OS_NAME" -Value "Linux"
+Set-GlobalConstant -Name "__PSCOREFXS_MACOS_OS_NAME" -Value "MacOS"
+Set-GlobalVariable -Name "__PSCOREFXS_OS_NAMES" -Value @("Windows", "Linux", "MacOS") 
 
 # █ Misc Constants
 Set-GlobalConstant -Name "__PSCOREFXS_TEMP_DIR" -Value "$(Get-UserHome)/.PsCoreFxs"
@@ -2522,6 +2557,7 @@ Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME" -Valu
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME" -Value "Arm64"
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME" -Value "X86"
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME" -Value "X64"  
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ABI_NORMLIZED_NAMES" -Value @($Global:__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME, $Global:__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME, $Global:__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME,$Global:__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME) 
 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered]@{
         Windows = [ordered]@{ 
@@ -2547,36 +2583,36 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered
 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROIDNDK_ANDROID_ABI_CONFIGURATIONS" -Value $([ordered]@{
         "$__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME"   = [ordered]@{ 
-            Name        = $__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME
-            NameDebug   = "$__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
-            NameRelease = "$__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
-            Abi         = $__PSCOREFXS_ANDROID_NDK_ARM_ABI
-            AbiNormalized         = $__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED
-            Triplet     = $__PSCOREFXS_ANDROID_NDK_ARM_TRIPLET
+            Name          = $__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME
+            NameDebug     = "$__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
+            NameRelease   = "$__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
+            Abi           = $__PSCOREFXS_ANDROID_NDK_ARM_ABI
+            AbiNormalized = $__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED
+            Triplet       = $__PSCOREFXS_ANDROID_NDK_ARM_TRIPLET
         }
         "$__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME" = [ordered]@{ 
-            Name        = $__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME
-            NameDebug   = "$__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
-            NameRelease = "$__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
-            Abi         = $__PSCOREFXS_ANDROID_NDK_ARM64_ABI
-            AbiNormalized         = $__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED
-            Triplet     = $__PSCOREFXS_ANDROID_NDK_ARM64_TRIPLET
+            Name          = $__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME
+            NameDebug     = "$__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
+            NameRelease   = "$__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
+            Abi           = $__PSCOREFXS_ANDROID_NDK_ARM64_ABI
+            AbiNormalized = $__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED
+            Triplet       = $__PSCOREFXS_ANDROID_NDK_ARM64_TRIPLET
         }
         "$__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME"   = [ordered]@{ 
-            Name        = $__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME
-            NameDebug   = "$__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
-            NameRelease = "$__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
-            Abi         = $__PSCOREFXS_ANDROID_NDK_X86_ABI
-            AbiNormalized         = $__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED
-            Triplet     = $__PSCOREFXS_ANDROID_NDK_X86_TRIPLET
+            Name          = $__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME
+            NameDebug     = "$__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
+            NameRelease   = "$__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
+            Abi           = $__PSCOREFXS_ANDROID_NDK_X86_ABI
+            AbiNormalized = $__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED
+            Triplet       = $__PSCOREFXS_ANDROID_NDK_X86_TRIPLET
         }
         "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME"   = [ordered]@{ 
-            Name        = $__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME
-            NameDebug   = "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
-            NameRelease = "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
-            Abi         = $__PSCOREFXS_ANDROID_NDK_X64_ABI
-            AbiNormalized         = $__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED
-            Triplet     = $__PSCOREFXS_ANDROID_NDK_X64_TRIPLET
+            Name          = $__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME
+            NameDebug     = "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME$__PSCOREFXS_DEBUG_CONFIGURATION"
+            NameRelease   = "$__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME$__PSCOREFXS_RELEASE_CONFIGURATION"
+            Abi           = $__PSCOREFXS_ANDROID_NDK_X64_ABI
+            AbiNormalized = $__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED
+            Triplet       = $__PSCOREFXS_ANDROID_NDK_X64_TRIPLET
         }
     })
 
@@ -2604,10 +2640,10 @@ Set-GlobalVariable -Name "__PSCOREFXS_WINDOWS_ARCH_CONFIGURATIONS" -Value $([ord
         }
     })
 
-    Set-GlobalVariable -Name "__PSCOREFXS_EMSCRIPTEN_CONFIGURATIONS" -Value $([ordered]@{
-        Wasm   = [ordered]@{ 
-            Name              = $__PSCOREFXS_DEBUG_CONFIGURATION 
-            NameDebug         = "Wasm$__PSCOREFXS_DEBUG_CONFIGURATION"
-            NameRelease       = "Wasm$__PSCOREFXS_RELEASE_CONFIGURATION"
+Set-GlobalVariable -Name "__PSCOREFXS_EMSCRIPTEN_CONFIGURATIONS" -Value $([ordered]@{
+        Wasm = [ordered]@{ 
+            Name        = $__PSCOREFXS_DEBUG_CONFIGURATION 
+            NameDebug   = "Wasm$__PSCOREFXS_DEBUG_CONFIGURATION"
+            NameRelease = "Wasm$__PSCOREFXS_RELEASE_CONFIGURATION"
         }
     })
