@@ -2456,7 +2456,7 @@ class OsNameValidateSet : System.Management.Automation.IValidateSetValuesGenerat
     }
 }
 
-# ███ Constants
+# ███ OS Constants
 Set-GlobalConstant -Name "__PSCOREFXS_WINDOWS_OS_NAME" -Value "Windows"
 Set-GlobalConstant -Name "__PSCOREFXS_LINUX_OS_NAME" -Value "Linux"
 Set-GlobalConstant -Name "__PSCOREFXS_MACOS_OS_NAME" -Value "MacOS"
@@ -2535,9 +2535,9 @@ Set-GlobalConstant -Name "__PSCOREFXS_EMSCRIPTEN_SDK_EMCONFIGURE_EXE" -Value "$_
 
 # █ Android NDK constants
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_TEMP_DIR" -Value "$(Get-UserHome)/.android-ndk" 
-Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_API_NUMBERS" -Value @("21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34") # Update on new available Android API. 
-Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_VERSION" -Value "r26c" #Update on next NDK version. 
-Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION" #Update on next NDK version.
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_API_NUMBERS" -Value @("21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35") # █> Update on new available Android API. 
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_VERSION" -Value "r27c" # █> Update on next NDK version. 
+Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_DIR" -Value "$__PSCOREFXS_ANDROID_NDK_TEMP_DIR/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION" # █> Update on next NDK version if different.
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_CLANG_PLUS_PLUS_EXE_SUFFIX" -Value "$(Select-ValueByPlatform -WindowsValue "clang++.cmd" -LinuxValue "clang++" -MacOSValue "clang++")"
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_LD_EXE" -Value "$(Select-ValueByPlatform -WindowsValue "ld.exe" -LinuxValue "ld" -MacOSValue "ld")"
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_AR_EXE" -Value "$(Select-ValueByPlatform -WindowsValue "llvm-ar.exe" -LinuxValue "llvm-ar" -MacOSValue "llvm-ar")"
@@ -2561,23 +2561,23 @@ Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ABI_NORMLIZED_NAMES" -Value @(
 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered]@{
         Windows = [ordered]@{ 
-            Url           = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-windows.zip" #Update on next NDK version.
-            Sha1          = "f8c8aa6135241954461b2e3629cada4722e13ee7".ToUpper() #Update on next NDK version.
+            Url           = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-windows.zip" # █> Update on next NDK version.
+            Sha1          = "ac5f7762764b1f15341094e148ad4f847d050c38".ToUpper() # █> Update on next NDK version.
             HostTag       = "windows-x86_64"
-            ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/windows-x86_64" #Update on next NDK version.
+            ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/windows-x86_64" # █> Update on next NDK version.
         }
         Linux   = [ordered]@{ 
             Url           = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-linux.zip" #Update on next NDK version.
-            Sha1          = "7faebe2ebd3590518f326c82992603170f07c96e".ToUpper() #Update on next NDK version.
+            Sha1          = "090e8083a715fdb1a3e402d0763c388abb03fb4e".ToUpper() # █> Update on next NDK version.
             HostTag       = "linux-x86_64"
-            ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" #Update on next NDK version.
+            ToolchainsDir = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" # █> Update on next NDK version.
         }
         MacOS   = [ordered]@{ 
             Url                   = "https://dl.google.com/android/repository/android-ndk-$__PSCOREFXS_ANDROID_NDK_VERSION-darwin.dmg" #Update on next NDK version.
-            Sha1                  = "9d86710c309c500aa0a918fa9902d9d72cca0889".ToUpper() #Update on next NDK version.
+            Sha1                  = "04d8c43eb4e884c4b16bbf7733ac9179a13b7b20".ToUpper() #Update on next NDK version.
             HostTag               = "darwin-x86_64"
-            ToolchainsDir         = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/darwin-x86_64" #Update on next NDK version.
-            NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" #Update on next NDK version.
+            ToolchainsDir         = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/darwin-x86_64" # █> Update on next NDK version.
+            NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" # █> Update on next NDK version.
         }
     })
 
