@@ -2267,6 +2267,10 @@ class AndroidNDKApiValidateSet : System.Management.Automation.IValidateSetValues
     static [bool] IsValidApi([string] $api) {
         return ($api -in [AndroidNDKApiValidateSet]::ValidValues)
     }
+
+    static [string] GetLastApi() {
+        return [AndroidNDKApiValidateSet]::ValidValues | Select-Object -Last 1
+    }
 }
 
 class AndroidNdkAbiNormalizedNameValidateSet : System.Management.Automation.IValidateSetValuesGenerator {
@@ -2275,6 +2279,10 @@ class AndroidNdkAbiNormalizedNameValidateSet : System.Management.Automation.IVal
     }
 }
 
+function Get-LastAndroidNDKApi {
+    return [AndroidNDKApiValidateSet]::ValidValues | Select-Object -Last 1
+    
+}
 function Assert-AndroidNDKApi {
     [CmdletBinding()]
     param (
