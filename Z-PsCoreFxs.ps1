@@ -2585,7 +2585,7 @@ Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered
             Sha1                  = "04d8c43eb4e884c4b16bbf7733ac9179a13b7b20".ToUpper() #Update on next NDK version.
             HostTag               = "darwin-x86_64"
             ToolchainsDir         = "$__PSCOREFXS_ANDROID_NDK_DIR/toolchains/llvm/prebuilt/darwin-x86_64" # █> Update on next NDK version.
-            NdkInternalMountedDir = "AndroidNDK11394342.app/Contents/NDK" # █> Update on next NDK version.
+            NdkInternalMountedDir = "AndroidNDK12479018.app/Contents/NDK" # █> Update on next NDK version.
         }
     })
 
