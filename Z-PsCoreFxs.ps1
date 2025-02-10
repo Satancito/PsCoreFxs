@@ -2281,8 +2281,12 @@ class AndroidNdkAbiNormalizedNameValidateSet : System.Management.Automation.IVal
 
 function Get-LastAndroidNDKApi {
     return [AndroidNDKApiValidateSet]::ValidValues | Select-Object -Last 1
-    
 }
+
+function Get-FirstAndroidNDKApi {
+    return [AndroidNDKApiValidateSet]::ValidValues | Select-Object -First 1
+}
+
 function Assert-AndroidNDKApi {
     [CmdletBinding()]
     param (
@@ -2290,7 +2294,6 @@ function Assert-AndroidNDKApi {
         [string]
         $Api
     )
-    $Api = [string]::IsNullOrWhiteSpace($Api)? ([AndroidNDKApiValidateSet]::ValidValues | Select-Object -First 1) : $Api
     Write-OutputMessage "Validating Android API number [$Api]: " -ForegroundColor Magenta -NoNewLine
     if ([AndroidNDKApiValidateSet]::IsValidApi($Api)) {
         Write-OutputMessage "OK." 
@@ -2299,7 +2302,7 @@ function Assert-AndroidNDKApi {
     throw "Invalid Android NDK API `"$Api`"."
 }
 
-function Test-AndroidNDKApi {
+function Get-ValidAndroidNDKApi {
     [CmdletBinding()]
     param (
         [Parameter()]
@@ -2308,14 +2311,21 @@ function Test-AndroidNDKApi {
 
         [Parameter()]
         [switch]
+        $Latest,
+
+        [Parameter()]
+        [switch]
         $Assert
     )
-    $Api = [string]::IsNullOrWhiteSpace($Api)? ([AndroidNDKApiValidateSet]::ValidValues | Select-Object -First 1) : $Api
+    $Api = ([string]::IsNullOrWhiteSpace($Api)? ($Latest.IsPresent? (Get-LastAndroidNDKApi):(Get-FirstAndroidNDKApi)) : $Api)
+    $Api = ([AndroidNDKApiValidateSet]::IsValidApi($Api) ? $Api : ($Latest.IsPresent? (Get-LastAndroidNDKApi):(Get-FirstAndroidNDKApi)))
     if ($Assert.IsPresent) {
         Assert-AndroidNDKApi -Api $Api
     }
-    return [AndroidNDKApiValidateSet]::IsValidApi($Api) ? $Api : $false
+    return $Api
 }
+
+
 
 function Get-AndroidNDKCompiler {
     param (
@@ -2565,7 +2575,7 @@ Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME" -Valu
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME" -Value "Arm64"
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME" -Value "X86"
 Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME" -Value "X64"  
-Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ABI_NORMLIZED_NAMES" -Value @($Global:__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME, $Global:__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME, $Global:__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME,$Global:__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME) 
+Set-GlobalConstant -Name "__PSCOREFXS_ANDROID_NDK_ABI_NORMLIZED_NAMES" -Value @($Global:__PSCOREFXS_ANDROID_NDK_ARM_ABI_NORMALIZED_NAME, $Global:__PSCOREFXS_ANDROID_NDK_ARM64_ABI_NORMALIZED_NAME, $Global:__PSCOREFXS_ANDROID_NDK_X86_ABI_NORMALIZED_NAME, $Global:__PSCOREFXS_ANDROID_NDK_X64_ABI_NORMALIZED_NAME) 
 
 Set-GlobalVariable -Name "__PSCOREFXS_ANDROID_NDK_OS_VARIANTS" -Value $([ordered]@{
         Windows = [ordered]@{ 
